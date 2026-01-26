@@ -58,6 +58,10 @@ class AppModeProvider @Inject constructor(
         return when {
             credentials.appReviewMode -> AppMode.NO_API
 
+            !credentials.nostrNsec.isNullOrBlank() && (selection == AppMode.NO_API || selection == null) -> {
+                AppMode.NO_API
+            }
+
             !credentials.pinboardAuthToken.isNullOrBlank() && (selection == AppMode.PINBOARD || selection == null) -> {
                 AppMode.PINBOARD
             }

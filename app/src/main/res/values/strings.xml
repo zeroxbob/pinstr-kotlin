@@ -57,22 +57,13 @@
     <string name="menu_side_panel_dismiss">Dismiss</string>
 
     <!-- Auth -->
-    <string name="auth_token_hint">API Token</string>
-    <string name="auth_title_pinboard">Connect with Pinboard</string>
-    <string name="auth_title_linkding">Connect with Linkding</string>
+    <string name="auth_token_hint">Nostr Private Key (nsec)</string>
+    <string name="auth_title_nostr">Connect with Nostr</string>
     <string name="auth_button">Connect</string>
-    <string name="auth_token_description"><![CDATA[Pinstr uses <a href="https://github.com/greenart7c3/Amber">Amber</a> for secure Nostr authentication. Your private keys never leave the Amber app.]]></string>
-    <string name="auth_linkding_description"><![CDATA[You can find your API token in the Linkding settings screen.]]></string>
-    <string name="auth_linkding_instance_url">Linkding instance URL</string>
-    <string name="auth_token_empty">Please connect with Amber to continue.</string>
-    <string name="auth_token_error">Connection failed. Please ensure Amber is installed and try again.</string>
-    <string name="auth_instance_url_empty">Please provide the Linkding instance URL to continue.</string>
-    <string name="auth_linkding_instance_url_error">Please enter a valid URL (e.g., https://linkding.example.com).</string>
-    <string name="auth_linkding_unreachable_instance_url">Cannot connect to the Linkding instance. Please check the URL and your internet connection.</string>
-    <string name="auth_logged_out_feedback">Connection lost. Please reconnect with Amber.</string>
-
-    <string name="auth_switch_to_pinboard">Connect with Pinboard instead</string>
-    <string name="auth_switch_to_linkding">Connect with Linkding instead</string>
+    <string name="auth_token_description"><![CDATA[Paste your Nostr private key (nsec) to connect. Your key will be stored securely on this device.<br/><br/>Future versions will support <a href="https://github.com/greenart7c3/Amber">Amber</a> for even better security.]]></string>
+    <string name="auth_token_empty">Please enter your Nostr private key (nsec).</string>
+    <string name="auth_token_error">Invalid nsec key. Please check your private key and try again.</string>
+    <string name="auth_logged_out_feedback">Session expired. Please reconnect.</string>
 
     <string name="auth_amber_required">Amber Required</string>
     <string name="auth_amber_not_installed">Amber app is not installed</string>

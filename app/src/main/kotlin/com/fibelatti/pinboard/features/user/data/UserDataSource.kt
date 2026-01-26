@@ -243,6 +243,7 @@ class UserDataSource @Inject constructor(
         pinboardAuthToken = userSharedPreferences.pinboardAuthToken,
         linkdingInstanceUrl = linkdingInstanceUrl,
         linkdingAuthToken = userSharedPreferences.linkdingAuthToken,
+        nostrNsec = userSharedPreferences.nostrNsec,
         appReviewMode = userSharedPreferences.appReviewMode,
     )
 
@@ -279,11 +280,14 @@ class UserDataSource @Inject constructor(
                 userSharedPreferences.appReviewMode = true
                 userSharedPreferences.pinboardAuthToken = null
                 userSharedPreferences.linkdingAuthToken = null
+                userSharedPreferences.nostrNsec = null
             }
 
             AppMode.PINBOARD == appMode -> userSharedPreferences.pinboardAuthToken = authToken.ifBlank { null }
 
             AppMode.LINKDING == appMode -> userSharedPreferences.linkdingAuthToken = authToken.ifBlank { null }
+
+            AppMode.NO_API == appMode -> userSharedPreferences.nostrNsec = authToken.ifBlank { null }
 
             else -> Unit
         }
@@ -304,6 +308,7 @@ class UserDataSource @Inject constructor(
 
             AppMode.NO_API -> {
                 userSharedPreferences.appReviewMode = false
+                userSharedPreferences.nostrNsec = null
             }
 
             else -> Unit

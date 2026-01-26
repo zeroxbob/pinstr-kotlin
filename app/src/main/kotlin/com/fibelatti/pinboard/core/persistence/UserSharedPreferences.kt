@@ -88,6 +88,10 @@ class UserSharedPreferences @Inject constructor(private val sharedPreferences: S
         get() = sharedPreferences.getBoolean("APP_REVIEW_MODE", false)
         set(value) = sharedPreferences.put("APP_REVIEW_MODE", value)
 
+    var nostrNsec: String?
+        get() = sharedPreferences.getString("NOSTR_NSEC", null)
+        set(value) = sharedPreferences.edit { putString("NOSTR_NSEC", value) }
+
     var linkdingInstanceUrl: String?
         get() = sharedPreferences.getString("LINKDING_INSTANCE_URL", currentLinkdingInstanceUrl)
         set(value) = sharedPreferences.put("LINKDING_INSTANCE_URL", value).also { currentLinkdingInstanceUrl = value }

@@ -2,6 +2,7 @@ package com.fibelatti.pinboard.features.user.presentation
 
 import com.fibelatti.core.android.platform.ResourceProvider
 import com.fibelatti.core.functional.onFailure
+import com.fibelatti.core.functional.onSuccess
 import com.fibelatti.pinboard.R
 import com.fibelatti.pinboard.core.AppConfig
 import com.fibelatti.pinboard.core.AppMode
@@ -15,6 +16,7 @@ import io.ktor.client.plugins.ResponseException
 import java.net.ConnectException
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import timber.log.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,71 +45,45 @@ class AuthViewModel @Inject constructor(
             .filterIsInstance<LoginContent>()
             .onEach { loginContent ->
                 _screenState.update {
-                    ScreenState(
-                        allowSwitching = loginContent.appMode == null,
-                        useLinkding = loginContent.appMode == AppMode.LINKDING,
-                    )
+                    ScreenState()
                 }
             }
             .launchIn(scope)
     }
 
-    fun useLinkding(value: Boolean) {
-        _screenState.update { current -> current.copy(useLinkding = value) }
-    }
-
     fun login(apiToken: String, instanceUrl: String) {
-        if (screenState.value.useLinkding && instanceUrl.isBlank()) {
-            _screenState.update { current ->
-                current.copy(
-                    isLoading = false,
-                    apiTokenError = null,
-                    instanceUrlError = resourceProvider.getString(R.string.auth_linkding_instance_url_error),
-                )
-            }
-            return
-        }
-
         if (apiToken.isBlank()) {
             _screenState.update { current ->
                 current.copy(
                     isLoading = false,
                     apiTokenError = resourceProvider.getString(R.string.auth_token_empty),
-                    instanceUrlError = null,
                 )
             }
             return
         }
 
         scope.launch {
+            Timber.d("AuthViewModel: Starting login with nsec")
             _screenState.update { current ->
                 current.copy(
                     isLoading = true,
                     apiTokenError = null,
-                    instanceUrlError = null,
                 )
             }
 
-            val params = if (screenState.value.useLinkding) {
-                Login.LinkdingParams(authToken = apiToken, instanceUrl = instanceUrl)
-            } else {
-                Login.PinboardParams(authToken = apiToken)
-            }
+            val params = Login.NostrParams(authToken = apiToken)
 
+            Timber.d("AuthViewModel: Calling loginUseCase")
             loginUseCase(params)
+                .onSuccess {
+                    Timber.d("AuthViewModel: Login succeeded, clearing loading state")
+                    _screenState.update { current ->
+                        current.copy(isLoading = false)
+                    }
+                }
                 .onFailure { error ->
+                    Timber.e(error, "AuthViewModel: Login failed")
                     when {
-                        error is ConnectException && screenState.value.useLinkding -> {
-                            _screenState.update { currentState ->
-                                currentState.copy(
-                                    isLoading = false,
-                                    instanceUrlError = resourceProvider.getString(
-                                        R.string.auth_linkding_unreachable_instance_url,
-                                    ),
-                                )
-                            }
-                        }
-
                         error is ResponseException && error.response.status.value in AppConfig.LOGIN_FAILED_CODES -> {
                             _screenState.update { currentState ->
                                 currentState.copy(

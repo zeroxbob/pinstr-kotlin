@@ -81,33 +81,19 @@ fun AuthScreen(
     LaunchedErrorHandlerEffect(error = error, handler = authViewModel::errorHandled)
 
     AuthScreen(
-        allowSwitching = screenState.allowSwitching,
-        useLinkding = screenState.useLinkding,
-        onUseLinkdingChanged = authViewModel::useLinkding,
         onAuthRequested = authViewModel::login,
         isLoading = screenState.isLoading,
         apiTokenError = screenState.apiTokenError,
-        instanceUrlError = screenState.instanceUrlError,
     )
 }
 
 @Composable
 private fun AuthScreen(
-    allowSwitching: Boolean,
-    useLinkding: Boolean,
-    onUseLinkdingChanged: (Boolean) -> Unit,
     onAuthRequested: (token: String, instanceUrl: String) -> Unit,
     isLoading: Boolean,
     apiTokenError: String?,
-    instanceUrlError: String?,
 ) {
-    val windowInsetsSides = remember(allowSwitching) {
-        buildList {
-            add(WindowInsetsSides.Horizontal)
-            add(WindowInsetsSides.Bottom)
-            if (allowSwitching) add(WindowInsetsSides.Top)
-        }.reduce { acc, windowInsetsSides -> acc + windowInsetsSides }
-    }
+    val windowInsetsSides = WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
 
     Column(
         modifier = Modifier
@@ -123,7 +109,7 @@ private fun AuthScreen(
             painter = painterResource(id = R.drawable.ic_pin),
             contentDescription = null,
             modifier = Modifier
-                .padding(top = if (allowSwitching) 40.dp else 0.dp, bottom = 20.dp)
+                .padding(top = 40.dp, bottom = 20.dp)
                 .size(80.dp),
             tint = MaterialTheme.colorScheme.primary,
         )
@@ -139,50 +125,13 @@ private fun AuthScreen(
                     .animateContentSize(),
             ) {
                 val authTokenFieldState = rememberTextFieldState()
-                val instanceUrlFieldState = rememberTextFieldState()
-                val focusManager = LocalFocusManager.current
 
                 Text(
-                    text = stringResource(
-                        id = if (useLinkding) R.string.auth_title_linkding else R.string.auth_title_pinboard,
-                    ),
+                    text = stringResource(id = R.string.auth_title_nostr),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleLargeEmphasized,
                 )
-
-                AnimatedVisibility(visible = useLinkding) {
-                    Column {
-                        OutlinedTextField(
-                            state = instanceUrlFieldState,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            label = { Text(text = stringResource(id = R.string.auth_linkding_instance_url)) },
-                            isError = instanceUrlError != null,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next,
-                                keyboardType = KeyboardType.Uri,
-                            ),
-                            onKeyboardAction = KeyboardActionHandler { focusManager.moveFocus(FocusDirection.Next) },
-                            lineLimits = TextFieldLineLimits.SingleLine,
-                            contentPadding = OutlinedTextFieldDefaults.contentPadding(
-                                start = 8.dp,
-                                end = 8.dp,
-                                bottom = 8.dp,
-                            ),
-                        )
-
-                        if (instanceUrlError != null) {
-                            Text(
-                                text = instanceUrlError,
-                                modifier = Modifier.padding(top = 4.dp),
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                    }
-                }
 
                 var authTokenVisible by remember { mutableStateOf(false) }
 
@@ -224,7 +173,7 @@ private fun AuthScreen(
                     onKeyboardAction = KeyboardActionHandler {
                         onAuthRequested(
                             authTokenFieldState.text.toString(),
-                            instanceUrlFieldState.text.toString(),
+                            "", // No instance URL needed for Nostr
                         )
                     },
                     contentPadding = OutlinedTextFieldDefaults.contentPadding(
@@ -260,7 +209,7 @@ private fun AuthScreen(
                             onClick = {
                                 onAuthRequested(
                                     authTokenFieldState.text.toString(),
-                                    instanceUrlFieldState.text.toString(),
+                                    "", // No instance URL needed for Nostr
                                 )
                             },
                             shapes = ExtendedTheme.defaultButtonShapes,
@@ -270,25 +219,7 @@ private fun AuthScreen(
                     }
                 }
 
-                if (allowSwitching) {
-                    TextButton(
-                        onClick = { onUseLinkdingChanged(!useLinkding) },
-                        shapes = ExtendedTheme.defaultButtonShapes,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .align(Alignment.CenterHorizontally),
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
-                    ) {
-                        Text(
-                            text = stringResource(
-                                if (useLinkding) R.string.auth_switch_to_pinboard else R.string.auth_switch_to_linkding,
-                            ),
-                        )
-                    }
-                }
-
                 AuthTokenHelp(
-                    useLinkding = useLinkding,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(top = 8.dp),
@@ -300,7 +231,6 @@ private fun AuthScreen(
 
 @Composable
 private fun AuthTokenHelp(
-    useLinkding: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var helpVisible by remember { mutableStateOf(false) }
@@ -314,9 +244,7 @@ private fun AuthTokenHelp(
         if (visible) {
             TextWithLinks(
                 text = HtmlCompat.fromHtml(
-                    stringResource(
-                        if (useLinkding) R.string.auth_linkding_description else R.string.auth_token_description,
-                    ),
+                    stringResource(R.string.auth_token_description),
                     HtmlCompat.FROM_HTML_MODE_COMPACT,
                 ),
                 modifier = Modifier.padding(top = 8.dp),
@@ -343,30 +271,9 @@ private fun AuthTokenHelp(
 private fun AuthScreenPreview() {
     ExtendedTheme {
         AuthScreen(
-            useLinkding = false,
-            allowSwitching = true,
-            onUseLinkdingChanged = {},
             onAuthRequested = { _, _ -> },
             isLoading = false,
             apiTokenError = null,
-            instanceUrlError = null,
-        )
-    }
-}
-
-@Composable
-@ThemePreviews
-@DevicePreviews
-private fun AuthScreenLinkdingPreview() {
-    ExtendedTheme {
-        AuthScreen(
-            useLinkding = true,
-            allowSwitching = true,
-            onUseLinkdingChanged = {},
-            onAuthRequested = { _, _ -> },
-            isLoading = false,
-            apiTokenError = null,
-            instanceUrlError = null,
         )
     }
 }
@@ -377,13 +284,9 @@ private fun AuthScreenLinkdingPreview() {
 private fun AuthScreenLoadingPreview() {
     ExtendedTheme {
         AuthScreen(
-            useLinkding = false,
-            allowSwitching = true,
-            onUseLinkdingChanged = {},
             onAuthRequested = { _, _ -> },
             isLoading = true,
             apiTokenError = null,
-            instanceUrlError = null,
         )
     }
 }
@@ -394,13 +297,9 @@ private fun AuthScreenLoadingPreview() {
 private fun AuthScreenErrorPreview() {
     ExtendedTheme {
         AuthScreen(
-            useLinkding = false,
-            allowSwitching = true,
-            onUseLinkdingChanged = {},
             onAuthRequested = { _, _ -> },
             isLoading = false,
             apiTokenError = "Some error happened. Please try again.",
-            instanceUrlError = null,
         )
     }
 }

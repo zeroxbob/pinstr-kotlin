@@ -1,6 +1,7 @@
 package com.fibelatti.pinboard.features.user.domain
 
 import com.fibelatti.core.functional.Result
+import com.fibelatti.core.functional.Success
 import com.fibelatti.core.functional.UseCaseWithParams
 import com.fibelatti.core.functional.map
 import com.fibelatti.core.functional.onFailure
@@ -26,6 +27,7 @@ class Login @Inject constructor(
         val appMode = when (params) {
             is PinboardParams -> AppMode.PINBOARD
             is LinkdingParams -> AppMode.LINKDING
+            is NostrParams -> AppMode.NO_API
         }
         when (params) {
             is PinboardParams -> {
@@ -38,6 +40,24 @@ class Login @Inject constructor(
                 userRepository.setAuthToken(appMode = appMode, authToken = params.authToken.trim())
                 appModeProvider.setSelection(appMode = appMode)
             }
+
+            is NostrParams -> {
+                // For Nostr, just store the nsec and skip API validation
+                Timber.d("NostrParams: Storing auth token")
+                userRepository.setAuthToken(appMode = appMode, authToken = params.authToken.trim())
+                appModeProvider.setSelection(appMode = appMode)
+                Timber.d("NostrParams: Auth token stored, skipping API validation")
+            }
+        }
+
+        // For Nostr, skip the API call and return success immediately
+        if (params is NostrParams) {
+            Timber.d("NostrParams: Returning success without API call")
+            return Success(Unit)
+                .onSuccess {
+                    Timber.d("NostrParams: Running UserLoggedIn action")
+                    appStateRepository.runAction(UserLoggedIn(appMode = appMode))
+                }
         }
 
         return postsRepository.update()
@@ -54,4 +74,6 @@ class Login @Inject constructor(
     data class PinboardParams(override val authToken: String) : Params()
 
     data class LinkdingParams(override val authToken: String, val instanceUrl: String) : Params()
+
+    data class NostrParams(override val authToken: String) : Params()
 }
