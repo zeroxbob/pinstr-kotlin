@@ -117,7 +117,7 @@ private fun AccountSwitcherScreen(
         if (AppMode.PINBOARD in userCredentials.getConnectedServices()) {
             item(key = "pinboard-account") {
                 AccountItem(
-                    title = stringResource(R.string.pinboard),
+                    title = stringResource(R.string.nostr),
                     onSelectClick = onSelectPinboardClick,
                     onLogoutClick = onLogoutPinboardClick,
                     description = userCredentials.getPinboardUsername(),
@@ -129,7 +129,7 @@ private fun AccountSwitcherScreen(
         if (AppMode.LINKDING in userCredentials.getConnectedServices()) {
             item(key = "linkding-account") {
                 AccountItem(
-                    title = stringResource(R.string.linkding),
+                    title = stringResource(R.string.nostr),
                     onSelectClick = onSelectLinkdingClick,
                     onLogoutClick = onLogoutLinkdingClick,
                     description = userCredentials.linkdingInstanceUrl,
@@ -147,7 +147,7 @@ private fun AccountSwitcherScreen(
                         .fillMaxWidth()
                         .animateItem(),
                 ) {
-                    Text(text = stringResource(R.string.account_switcher_add_pinboard))
+                    Text(text = stringResource(R.string.account_switcher_add_nostr))
                 }
             }
         }
@@ -161,7 +161,7 @@ private fun AccountSwitcherScreen(
                         .fillMaxWidth()
                         .animateItem(),
                 ) {
-                    Text(text = stringResource(R.string.account_switcher_add_linkding))
+                    Text(text = stringResource(R.string.account_switcher_add_nostr))
                 }
             }
         }

@@ -33,7 +33,7 @@
         <activity
             android:name=".features.share.ShareReceiverActivity"
             android:exported="true"
-            android:label="@string/share_to_pinkt"
+            android:label="@string/share_to_pinstr"
             android:noHistory="true">
 
             <intent-filter>
@@ -48,7 +48,7 @@
         <activity
             android:name=".features.share.QuickShareReceiverActivity"
             android:exported="true"
-            android:label="@string/share_to_pinkt_no_edit"
+            android:label="@string/share_to_pinstr_no_edit"
             android:noHistory="true">
 
             <intent-filter>

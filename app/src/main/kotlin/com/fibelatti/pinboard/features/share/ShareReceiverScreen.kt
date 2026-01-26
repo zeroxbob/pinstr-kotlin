@@ -148,7 +148,7 @@ fun ShareReceiverScreen(
                 modifier = Modifier.padding(top = 16.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.share_to_pinkt_choose_service),
+                    text = stringResource(R.string.share_to_pinstr_choose_service),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleLarge,
                 )
@@ -164,7 +164,7 @@ fun ShareReceiverScreen(
                         shapes = ExtendedTheme.defaultButtonShapes,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text(text = stringResource(R.string.pinboard))
+                        Text(text = stringResource(R.string.nostr))
                     }
 
                     Button(
@@ -175,7 +175,7 @@ fun ShareReceiverScreen(
                         shapes = ExtendedTheme.defaultButtonShapes,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text(text = stringResource(R.string.linkding))
+                        Text(text = stringResource(R.string.nostr))
                     }
                 }
             }

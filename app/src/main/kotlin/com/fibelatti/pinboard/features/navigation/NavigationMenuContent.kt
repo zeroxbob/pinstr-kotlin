@@ -126,8 +126,8 @@ private fun NavigationMenuContent(
     ) {
         val serviceName = remember(appMode) {
             when (appMode) {
-                AppMode.PINBOARD -> R.string.pinboard
-                AppMode.LINKDING -> R.string.linkding
+                AppMode.PINBOARD -> R.string.nostr
+                AppMode.LINKDING -> R.string.nostr
                 else -> null
             }
         }

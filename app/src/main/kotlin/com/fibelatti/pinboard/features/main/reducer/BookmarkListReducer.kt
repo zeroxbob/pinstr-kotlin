@@ -36,8 +36,8 @@ class BookmarkListReducer @Inject constructor(
     override fun invoke(mainState: MainState, appState: AppState): MainState {
         val content: PostListContent = appState.content.find<PostListContent>() ?: return mainState
         val currentServiceName = when (appState.appMode) {
-            AppMode.PINBOARD -> R.string.pinboard
-            AppMode.LINKDING -> R.string.linkding
+            AppMode.PINBOARD -> R.string.nostr
+            AppMode.LINKDING -> R.string.nostr  // TODO: Remove Linkding support
             else -> null
         }
         val connectedServices: Set<AppMode> = userRepository.userCredentials.value.getConnectedServices()

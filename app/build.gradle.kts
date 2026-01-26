@@ -14,7 +14,7 @@ plugins {
 
 object AppInfo {
 
-    const val APP_NAME = "Pinkt"
+    const val APP_NAME = "Pinstr"
     const val APPLICATION_ID = "com.fibelatti.pinboard"
 
     private const val VERSION_MAJOR = 3

@@ -25,22 +25,23 @@ internal val LocalExtendedColors = staticCompositionLocalOf { ExtendedLightColor
 // endregion Extended Colors
 
 // region Material Colors
+// Pinstr branding colors: Violet (#8b5cf6) to Indigo (#6366f1) gradient
 internal val LightColorScheme: ColorScheme = lightColorScheme(
-    primary = Color(0xFF3F5F90),
+    primary = Color(0xFF8b5cf6), // Violet (from Pinstr logo)
     onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD6E3FF),
-    onPrimaryContainer = Color(0xFF254777),
-    inversePrimary = Color(0xFFA8C8FF),
+    primaryContainer = Color(0xFFEDE7FF), // Light violet container
+    onPrimaryContainer = Color(0xFF2E0E66), // Dark violet for contrast
+    inversePrimary = Color(0xFFC7B5FF),
 
-    secondary = Color(0xFF555F71),
+    secondary = Color(0xFF6366f1), // Indigo (from Pinstr gradient)
     onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFD9E3F8),
-    onSecondaryContainer = Color(0xFF3E4758),
+    secondaryContainer = Color(0xFFE5E7FF),
+    onSecondaryContainer = Color(0xFF1E1B5E),
 
-    tertiary = Color(0xFF595992),
+    tertiary = Color(0xFF7c3aed), // Purple accent (between violet and indigo)
     onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFE2DFFF),
-    onTertiaryContainer = Color(0xFF414178),
+    tertiaryContainer = Color(0xFFF3E8FF),
+    onTertiaryContainer = Color(0xFF2D0A56),
 
     error = Color(0xFFBA1A1A),
     onError = Color(0xFFFFFFFF),
@@ -90,21 +91,21 @@ internal val LightColorScheme: ColorScheme = lightColorScheme(
 )
 
 internal val DarkColorScheme: ColorScheme = darkColorScheme(
-    primary = Color(0xFFA8C8FF),
-    onPrimary = Color(0xFF06305F),
-    primaryContainer = Color(0xFF254777),
-    onPrimaryContainer = Color(0xFFD6E3FF),
-    inversePrimary = Color(0xFF3F5F90),
+    primary = Color(0xFFC7B5FF), // Light violet for dark mode
+    onPrimary = Color(0xFF2E0E66),
+    primaryContainer = Color(0xFF5B21B6), // Rich violet
+    onPrimaryContainer = Color(0xFFEDE7FF),
+    inversePrimary = Color(0xFF8b5cf6),
 
-    secondary = Color(0xFFBDC7DC),
-    onSecondary = Color(0xFF273141),
-    secondaryContainer = Color(0xFF3E4758),
-    onSecondaryContainer = Color(0xFFD9E3F8),
+    secondary = Color(0xFFA5B4FC), // Light indigo for dark mode
+    onSecondary = Color(0xFF1E1B5E),
+    secondaryContainer = Color(0xFF4338CA), // Rich indigo
+    onSecondaryContainer = Color(0xFFE5E7FF),
 
-    tertiary = Color(0xFFC2C1FF),
-    onTertiary = Color(0xFF2A2A60),
-    tertiaryContainer = Color(0xFF414178),
-    onTertiaryContainer = Color(0xFFE2DFFF),
+    tertiary = Color(0xFFD8B4FE), // Light purple for dark mode
+    onTertiary = Color(0xFF2D0A56),
+    tertiaryContainer = Color(0xFF6B21A8), // Rich purple
+    onTertiaryContainer = Color(0xFFF3E8FF),
 
     error = Color(0xFFFFB4AB),
     onError = Color(0xFF690005),
