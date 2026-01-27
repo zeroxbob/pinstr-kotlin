@@ -580,24 +580,6 @@ private fun BookmarkBasicDetails(
             ),
         )
 
-        if (AppMode.LINKDING == appMode) {
-            val notesFieldState = rememberTextFieldState(initialText = notes)
-
-            RememberedEffect(notesFieldState.text) {
-                onNotesChanged(notesFieldState.text.toString())
-            }
-
-            OutlinedTextField(
-                state = notesFieldState,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(id = R.string.posts_add_url_notes)) },
-                contentPadding = OutlinedTextFieldDefaults.contentPadding(
-                    start = 8.dp,
-                    end = 8.dp,
-                    bottom = 8.dp,
-                ),
-            )
-        }
     }
 }
 

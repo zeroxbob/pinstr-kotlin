@@ -6,7 +6,6 @@ import com.fibelatti.core.functional.Failure
 import com.fibelatti.core.functional.Success
 import com.fibelatti.pinboard.BaseViewModelTest
 import com.fibelatti.pinboard.MockDataProvider.SAMPLE_API_TOKEN
-import com.fibelatti.pinboard.MockDataProvider.SAMPLE_INSTANCE_URL
 import com.fibelatti.pinboard.MockDataProvider.createAppState
 import com.fibelatti.pinboard.MockDataProvider.createPostListContent
 import com.fibelatti.pinboard.R
@@ -58,17 +57,6 @@ class AuthViewModelTest : BaseViewModelTest() {
                 assertThat(awaitItem()).isEqualTo(
                     AuthViewModel.ScreenState(
                         allowSwitching = true,
-                        useLinkding = false,
-                    ),
-                )
-
-                appStateFlow.value = createAppState(content = createPostListContent())
-                appStateFlow.value = createAppState(content = LoginContent(appMode = AppMode.LINKDING))
-
-                assertThat(awaitItem()).isEqualTo(
-                    AuthViewModel.ScreenState(
-                        allowSwitching = false,
-                        useLinkding = true,
                     ),
                 )
 
@@ -78,7 +66,6 @@ class AuthViewModelTest : BaseViewModelTest() {
                 assertThat(awaitItem()).isEqualTo(
                     AuthViewModel.ScreenState(
                         allowSwitching = false,
-                        useLinkding = false,
                     ),
                 )
             }
@@ -107,55 +94,27 @@ class AuthViewModelTest : BaseViewModelTest() {
         }
 
         @Test
-        fun `GIVEN use linkding is true AND instance url is empty WHEN login is called THEN error state is emitted`() =
-            runTest {
-                // GIVEN
-                every {
-                    mockResourceProvider.getString(R.string.auth_linkding_instance_url_error)
-                } returns "R.string.auth_linkding_instance_url_error"
-                viewModel.useLinkding(value = true)
-
-                // WHEN
-                viewModel.login(
-                    apiToken = SAMPLE_API_TOKEN,
-                    instanceUrl = "",
-                )
-
-                verify { mockLogin wasNot Called }
-
-                assertThat(viewModel.screenState.first()).isEqualTo(
-                    AuthViewModel.ScreenState(
-                        useLinkding = true,
-                        instanceUrlError = "R.string.auth_linkding_instance_url_error",
-                    ),
-                )
-            }
-
-        @Test
         fun `GIVEN Login is successful WHEN login is called THEN nothing else happens`() = runTest {
             // GIVEN
             coEvery {
                 mockLogin(
-                    Login.LinkdingParams(
+                    Login.PinboardParams(
                         authToken = SAMPLE_API_TOKEN,
-                        instanceUrl = SAMPLE_INSTANCE_URL,
                     ),
                 )
             } returns Success(Unit)
-            viewModel.useLinkding(value = true)
 
             // WHEN
             viewModel.login(
                 apiToken = SAMPLE_API_TOKEN,
-                instanceUrl = SAMPLE_INSTANCE_URL,
+                instanceUrl = "",
             )
 
             // THEN
             coVerify {
                 mockLogin(
-                    Login.LinkdingParams(
+                    Login.PinboardParams(
                         authToken = SAMPLE_API_TOKEN,
-                        instanceUrl = SAMPLE_INSTANCE_URL,
                     ),
                 )
             }
@@ -163,7 +122,6 @@ class AuthViewModelTest : BaseViewModelTest() {
             assertThat(viewModel.error.first()).isNull()
             assertThat(viewModel.screenState.first()).isEqualTo(
                 AuthViewModel.ScreenState(
-                    useLinkding = true,
                     isLoading = true,
                 ),
             )
@@ -217,7 +175,7 @@ class AuthViewModelTest : BaseViewModelTest() {
                 // WHEN
                 viewModel.login(
                     apiToken = SAMPLE_API_TOKEN,
-                    instanceUrl = SAMPLE_INSTANCE_URL,
+                    instanceUrl = "",
                 )
 
                 // THEN
@@ -238,7 +196,7 @@ class AuthViewModelTest : BaseViewModelTest() {
             // WHEN
             viewModel.login(
                 apiToken = SAMPLE_API_TOKEN,
-                instanceUrl = SAMPLE_INSTANCE_URL,
+                instanceUrl = "",
             )
 
             // THEN

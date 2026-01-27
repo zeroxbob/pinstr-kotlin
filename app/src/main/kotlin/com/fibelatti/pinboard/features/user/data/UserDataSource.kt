@@ -36,12 +36,6 @@ class UserDataSource @Inject constructor(
     private val _currentPreferences = MutableStateFlow(getPreferences())
     override val currentPreferences: StateFlow<UserPreferences> = _currentPreferences.asStateFlow()
 
-    override var linkdingInstanceUrl: String?
-        get() = userSharedPreferences.linkdingInstanceUrl
-        set(value) {
-            userSharedPreferences.linkdingInstanceUrl = value
-        }
-
     override var lastUpdate: String
         get() = userSharedPreferences.lastUpdate
         set(value) {
@@ -241,8 +235,6 @@ class UserDataSource @Inject constructor(
 
     private fun getUserCredentials(): UserCredentials = UserCredentials(
         pinboardAuthToken = userSharedPreferences.pinboardAuthToken,
-        linkdingInstanceUrl = linkdingInstanceUrl,
-        linkdingAuthToken = userSharedPreferences.linkdingAuthToken,
         nostrNsec = userSharedPreferences.nostrNsec,
         appReviewMode = userSharedPreferences.appReviewMode,
     )
@@ -279,13 +271,10 @@ class UserDataSource @Inject constructor(
             "app_review_mode" == authToken -> {
                 userSharedPreferences.appReviewMode = true
                 userSharedPreferences.pinboardAuthToken = null
-                userSharedPreferences.linkdingAuthToken = null
                 userSharedPreferences.nostrNsec = null
             }
 
             AppMode.PINBOARD == appMode -> userSharedPreferences.pinboardAuthToken = authToken.ifBlank { null }
-
-            AppMode.LINKDING == appMode -> userSharedPreferences.linkdingAuthToken = authToken.ifBlank { null }
 
             AppMode.NO_API == appMode -> userSharedPreferences.nostrNsec = authToken.ifBlank { null }
 
@@ -299,11 +288,6 @@ class UserDataSource @Inject constructor(
         when (appMode) {
             AppMode.PINBOARD -> {
                 userSharedPreferences.pinboardAuthToken = null
-            }
-
-            AppMode.LINKDING -> {
-                userSharedPreferences.linkdingInstanceUrl = null
-                userSharedPreferences.linkdingAuthToken = null
             }
 
             AppMode.NO_API -> {

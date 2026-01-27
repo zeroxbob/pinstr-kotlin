@@ -6,7 +6,6 @@ import com.fibelatti.core.functional.exceptionOrNull
 import com.fibelatti.core.functional.getOrNull
 import com.fibelatti.pinboard.MockDataProvider.SAMPLE_API_TOKEN
 import com.fibelatti.pinboard.MockDataProvider.SAMPLE_DATE_TIME
-import com.fibelatti.pinboard.MockDataProvider.SAMPLE_INSTANCE_URL
 import com.fibelatti.pinboard.core.AppMode
 import com.fibelatti.pinboard.core.AppModeProvider
 import com.fibelatti.pinboard.features.appstate.AppStateRepository
@@ -24,7 +23,6 @@ import org.junit.jupiter.api.Test
 class LoginTest {
 
     private val mockUserRepository = mockk<UserRepository> {
-        coJustRun { linkdingInstanceUrl = any() }
         coJustRun { setAuthToken(appMode = any(), authToken = any()) }
     }
     private val mockAppStateRepository = mockk<AppStateRepository> {
@@ -67,17 +65,16 @@ class LoginTest {
         coEvery { mockPostsRepository.clearCache() } returns Success(Unit)
 
         // WHEN
-        val result = login(Login.LinkdingParams(authToken = SAMPLE_API_TOKEN, instanceUrl = SAMPLE_INSTANCE_URL))
+        val result = login(Login.PinboardParams(authToken = SAMPLE_API_TOKEN))
 
         // THEN
         assertThat(result.getOrNull()).isEqualTo(Unit)
         coVerifySequence {
-            mockUserRepository.linkdingInstanceUrl = SAMPLE_INSTANCE_URL
-            mockUserRepository.setAuthToken(appMode = AppMode.LINKDING, authToken = SAMPLE_API_TOKEN)
-            mockAppModeProvider.setSelection(appMode = AppMode.LINKDING)
+            mockUserRepository.setAuthToken(appMode = AppMode.PINBOARD, authToken = SAMPLE_API_TOKEN)
+            mockAppModeProvider.setSelection(appMode = AppMode.PINBOARD)
             mockPostsRepository.update()
             mockPostsRepository.clearCache()
-            mockAppStateRepository.runAction(UserLoggedIn(appMode = AppMode.LINKDING))
+            mockAppStateRepository.runAction(UserLoggedIn(appMode = AppMode.PINBOARD))
         }
     }
 }

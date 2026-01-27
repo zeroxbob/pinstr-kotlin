@@ -62,17 +62,8 @@ fun AccountSwitcherScreen(
             onLogoutPinboardClick = {
                 accountSwitcherViewModel.logout(appMode = AppMode.PINBOARD)
             },
-            onSelectLinkdingClick = {
-                accountSwitcherViewModel.select(appMode = AppMode.LINKDING)
-            },
-            onLogoutLinkdingClick = {
-                accountSwitcherViewModel.logout(appMode = AppMode.LINKDING)
-            },
             onAddPinboardAccountClick = {
                 accountSwitcherViewModel.addAccount(appMode = AppMode.PINBOARD)
-            },
-            onAddLinkdingAccountClick = {
-                accountSwitcherViewModel.addAccount(appMode = AppMode.LINKDING)
             },
             modifier = Modifier.windowInsetsPadding(
                 WindowInsets.safeDrawing
@@ -89,10 +80,7 @@ private fun AccountSwitcherScreen(
     onLogoutReviewModeClick: () -> Unit,
     onSelectPinboardClick: () -> Unit,
     onLogoutPinboardClick: () -> Unit,
-    onSelectLinkdingClick: () -> Unit,
-    onLogoutLinkdingClick: () -> Unit,
     onAddPinboardAccountClick: () -> Unit,
-    onAddLinkdingAccountClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -126,36 +114,10 @@ private fun AccountSwitcherScreen(
             }
         }
 
-        if (AppMode.LINKDING in userCredentials.getConnectedServices()) {
-            item(key = "linkding-account") {
-                AccountItem(
-                    title = stringResource(R.string.nostr),
-                    onSelectClick = onSelectLinkdingClick,
-                    onLogoutClick = onLogoutLinkdingClick,
-                    description = userCredentials.linkdingInstanceUrl,
-                    modifier = Modifier.animateItem(),
-                )
-            }
-        }
-
         if (AppMode.PINBOARD !in userCredentials.getConnectedServices()) {
             item(key = "add-pinboard-account") {
                 FilledTonalButton(
                     onClick = onAddPinboardAccountClick,
-                    shapes = ExtendedTheme.defaultButtonShapes,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
-                ) {
-                    Text(text = stringResource(R.string.account_switcher_add_nostr))
-                }
-            }
-        }
-
-        if (AppMode.LINKDING !in userCredentials.getConnectedServices()) {
-            item(key = "add-linkding-account") {
-                FilledTonalButton(
-                    onClick = onAddLinkdingAccountClick,
                     shapes = ExtendedTheme.defaultButtonShapes,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -234,41 +196,12 @@ private fun AccountSwitcherScreenPinboardOnlyPreview() {
         AccountSwitcherScreen(
             userCredentials = UserCredentials(
                 pinboardAuthToken = "pinboard-token",
-                linkdingInstanceUrl = null,
-                linkdingAuthToken = null,
             ),
             onSelectReviewModeClick = {},
             onLogoutReviewModeClick = {},
             onSelectPinboardClick = {},
             onLogoutPinboardClick = {},
-            onSelectLinkdingClick = {},
-            onLogoutLinkdingClick = {},
             onAddPinboardAccountClick = {},
-            onAddLinkdingAccountClick = {},
-            modifier = Modifier.safeDrawingPadding(),
-        )
-    }
-}
-
-@ThemePreviews
-@DevicePreviews
-@Composable
-private fun AccountSwitcherScreenLinkdingOnlyPreview() {
-    ExtendedTheme {
-        AccountSwitcherScreen(
-            userCredentials = UserCredentials(
-                pinboardAuthToken = null,
-                linkdingInstanceUrl = "https://my.linkding.com",
-                linkdingAuthToken = "linkding-token",
-            ),
-            onSelectReviewModeClick = {},
-            onLogoutReviewModeClick = {},
-            onSelectPinboardClick = {},
-            onLogoutPinboardClick = {},
-            onSelectLinkdingClick = {},
-            onLogoutLinkdingClick = {},
-            onAddPinboardAccountClick = {},
-            onAddLinkdingAccountClick = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }
@@ -282,18 +215,13 @@ private fun AccountSwitcherScreenReviewModePreview() {
         AccountSwitcherScreen(
             userCredentials = UserCredentials(
                 pinboardAuthToken = "pinboard-token",
-                linkdingInstanceUrl = "https://my.linkding.com",
-                linkdingAuthToken = "linkding-token",
                 appReviewMode = true,
             ),
             onSelectReviewModeClick = {},
             onLogoutReviewModeClick = {},
             onSelectPinboardClick = {},
             onLogoutPinboardClick = {},
-            onSelectLinkdingClick = {},
-            onLogoutLinkdingClick = {},
             onAddPinboardAccountClick = {},
-            onAddLinkdingAccountClick = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }
@@ -307,17 +235,12 @@ private fun AccountSwitcherScreenPreview() {
         AccountSwitcherScreen(
             userCredentials = UserCredentials(
                 pinboardAuthToken = "pinboard-token",
-                linkdingInstanceUrl = "https://my.linkding.com",
-                linkdingAuthToken = "linkding-token",
             ),
             onSelectReviewModeClick = {},
             onLogoutReviewModeClick = {},
             onSelectPinboardClick = {},
             onLogoutPinboardClick = {},
-            onSelectLinkdingClick = {},
-            onLogoutLinkdingClick = {},
             onAddPinboardAccountClick = {},
-            onAddLinkdingAccountClick = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }

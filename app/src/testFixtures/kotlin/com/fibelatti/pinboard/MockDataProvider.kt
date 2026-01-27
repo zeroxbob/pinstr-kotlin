@@ -14,7 +14,6 @@ import com.fibelatti.pinboard.features.appstate.ShouldLoad
 import com.fibelatti.pinboard.features.appstate.ShouldLoadFirstPage
 import com.fibelatti.pinboard.features.appstate.SortType
 import com.fibelatti.pinboard.features.appstate.ViewCategory
-import com.fibelatti.pinboard.features.linkding.data.BookmarkLocal
 import com.fibelatti.pinboard.features.posts.data.model.GenericResponseDto
 import com.fibelatti.pinboard.features.posts.data.model.GetPostDto
 import com.fibelatti.pinboard.features.posts.data.model.PendingSyncDto
@@ -29,7 +28,7 @@ object MockDataProvider {
     // region Properties
     private const val SAMPLE_USERNAME = "user"
     const val SAMPLE_API_TOKEN = "user:00000000000"
-    const val SAMPLE_INSTANCE_URL = "https://www.linkding-instance.com/"
+    const val SAMPLE_INSTANCE_URL = "https://www.example-instance.com/"
     const val SAMPLE_DATE_TIME = "2019-01-10T08:20:10Z"
     const val SAMPLE_FUTURE_DATE_TIME = "2019-01-20T08:20:10Z"
     const val SAMPLE_URL_VALID = "https://www.url.com"
@@ -171,39 +170,5 @@ object MockDataProvider {
     fun createTag(
         name: String = SAMPLE_TAG_VALUE_1,
     ): Tag = Tag(name)
-    // endregion
-
-    // region Linking
-    fun createBookmarkLocal(
-        id: String = SAMPLE_HASH,
-        url: String = SAMPLE_URL_VALID,
-        title: String = SAMPLE_URL_TITLE,
-        description: String = SAMPLE_URL_DESCRIPTION,
-        notes: String? = null,
-        websiteTitle: String? = null,
-        websiteDescription: String? = null,
-        isArchived: Boolean? = null,
-        unread: Boolean? = false,
-        shared: Boolean? = true,
-        tagNames: String? = SAMPLE_TAGS_RESPONSE,
-        dateAdded: String = SAMPLE_DATE_TIME,
-        dateModified: String = SAMPLE_DATE_TIME,
-        pendingSync: PendingSyncDto? = null,
-    ): BookmarkLocal = BookmarkLocal(
-        id = id,
-        url = url,
-        title = title,
-        description = description,
-        notes = notes,
-        websiteTitle = websiteTitle,
-        websiteDescription = websiteDescription,
-        isArchived = isArchived,
-        unread = unread,
-        shared = shared,
-        tagNames = tagNames,
-        dateAdded = dateAdded,
-        dateModified = dateModified,
-        pendingSync = pendingSync,
-    )
     // endregion
 }

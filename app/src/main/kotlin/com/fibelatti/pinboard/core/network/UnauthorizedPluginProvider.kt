@@ -25,11 +25,7 @@ class UnauthorizedPluginProvider @Inject constructor() {
 
     val plugin: ClientPlugin<Unit> = createClientPlugin("UnauthorizedPlugin") {
         onResponse { response ->
-            val appMode = if (response.request.url.host == "api.pinboard.in") {
-                AppMode.PINBOARD
-            } else {
-                AppMode.LINKDING
-            }
+            val appMode = AppMode.PINBOARD
 
             // An unrelated endpoint is used to validate the provided token.
             // If the user provides an invalid token the server will respond with `Unauthorized`,

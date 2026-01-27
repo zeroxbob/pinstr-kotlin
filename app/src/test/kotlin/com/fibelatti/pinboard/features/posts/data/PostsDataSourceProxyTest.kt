@@ -2,7 +2,6 @@ package com.fibelatti.pinboard.features.posts.data
 
 import com.fibelatti.core.functional.Result
 import com.fibelatti.pinboard.core.AppMode
-import com.fibelatti.pinboard.features.linkding.data.PostsDataSourceLinkdingApi
 import com.fibelatti.pinboard.features.posts.domain.PostsRepository
 import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.posts.domain.model.PostListResult
@@ -29,7 +28,6 @@ import org.junit.jupiter.params.provider.MethodSource
 internal class PostsDataSourceProxyTest {
 
     private val postsDataSourcePinboardApi = mockk<PostsDataSourcePinboardApi>()
-    private val postsDataSourceLinkdingApi = mockk<PostsDataSourceLinkdingApi>()
     private val postsDataSourceNoApi = mockk<PostsDataSourceNoApi>()
 
     private val booleanArg = randomBoolean()
@@ -39,12 +37,10 @@ internal class PostsDataSourceProxyTest {
     fun testCases(): List<Pair<AppMode, PostsRepository>> = listOf(
         AppMode.NO_API to postsDataSourceNoApi,
         AppMode.PINBOARD to postsDataSourcePinboardApi,
-        AppMode.LINKDING to postsDataSourceLinkdingApi,
     )
 
     private fun getProxy(appMode: AppMode): PostsRepository = PostsDataSourceProxy(
         postsDataSourcePinboardApi = { postsDataSourcePinboardApi },
-        postsDataSourceLinkdingApi = { postsDataSourceLinkdingApi },
         postsDataSourceNoApi = { postsDataSourceNoApi },
         appModeProvider = mockk {
             every { this@mockk.appMode } returns MutableStateFlow(appMode)
@@ -52,7 +48,7 @@ internal class PostsDataSourceProxyTest {
     )
 
     private fun verifyAllSources() {
-        confirmVerified(postsDataSourceNoApi, postsDataSourcePinboardApi, postsDataSourceLinkdingApi)
+        confirmVerified(postsDataSourceNoApi, postsDataSourcePinboardApi)
     }
 
     @BeforeEach

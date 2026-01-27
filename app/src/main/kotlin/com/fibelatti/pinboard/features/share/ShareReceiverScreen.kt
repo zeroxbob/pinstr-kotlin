@@ -166,17 +166,6 @@ fun ShareReceiverScreen(
                     ) {
                         Text(text = stringResource(R.string.nostr))
                     }
-
-                    Button(
-                        onClick = {
-                            onSelectService(AppMode.LINKDING)
-                            showServicePicker = false
-                        },
-                        shapes = ExtendedTheme.defaultButtonShapes,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(text = stringResource(R.string.nostr))
-                    }
                 }
             }
         }

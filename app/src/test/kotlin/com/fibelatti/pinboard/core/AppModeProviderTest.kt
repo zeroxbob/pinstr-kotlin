@@ -19,8 +19,6 @@ class AppModeProviderTest {
     private val credentialsFlow = MutableStateFlow(
         UserCredentials(
             pinboardAuthToken = null,
-            linkdingInstanceUrl = null,
-            linkdingAuthToken = null,
         ),
     )
     private val mockUserRepository: UserRepository = mockk {
@@ -52,14 +50,6 @@ class AppModeProviderTest {
                 )
             }
             assertThat(awaitItem()).isEqualTo(AppMode.PINBOARD)
-
-            credentialsFlow.update {
-                it.copy(
-                    pinboardAuthToken = null,
-                    linkdingAuthToken = "token",
-                )
-            }
-            assertThat(awaitItem()).isEqualTo(AppMode.LINKDING)
         }
     }
 
@@ -68,8 +58,6 @@ class AppModeProviderTest {
         credentialsFlow.update {
             UserCredentials(
                 pinboardAuthToken = "pinboard-token",
-                linkdingInstanceUrl = "linkding-url",
-                linkdingAuthToken = "linkding-token",
                 appReviewMode = true,
             )
         }
@@ -86,8 +74,6 @@ class AppModeProviderTest {
         credentialsFlow.update {
             UserCredentials(
                 pinboardAuthToken = "pinboard-token",
-                linkdingInstanceUrl = "linkding-url",
-                linkdingAuthToken = "linkding-token",
             )
         }
 
@@ -95,23 +81,6 @@ class AppModeProviderTest {
 
         appModeProvider.appMode.test {
             assertThat(awaitItem()).isEqualTo(AppMode.PINBOARD)
-        }
-    }
-
-    @Test
-    fun `set selection updates the app mode - linkding`() = runTest {
-        credentialsFlow.update {
-            UserCredentials(
-                pinboardAuthToken = "pinboard-token",
-                linkdingInstanceUrl = "linkding-url",
-                linkdingAuthToken = "linkding-token",
-            )
-        }
-
-        appModeProvider.setSelection(appMode = AppMode.LINKDING)
-
-        appModeProvider.appMode.test {
-            assertThat(awaitItem()).isEqualTo(AppMode.LINKDING)
         }
     }
 }

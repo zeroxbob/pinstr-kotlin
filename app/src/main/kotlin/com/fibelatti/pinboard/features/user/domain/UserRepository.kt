@@ -16,8 +16,6 @@ interface UserRepository {
 
     val currentPreferences: StateFlow<UserPreferences>
 
-    var linkdingInstanceUrl: String?
-
     var lastUpdate: String
 
     var periodicSync: PeriodicSync

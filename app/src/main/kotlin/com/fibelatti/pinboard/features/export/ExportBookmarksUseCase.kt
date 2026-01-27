@@ -2,11 +2,7 @@ package com.fibelatti.pinboard.features.export
 
 import android.content.Context
 import com.fibelatti.core.functional.UseCase
-import com.fibelatti.pinboard.core.AppMode
-import com.fibelatti.pinboard.core.AppModeProvider
 import com.fibelatti.pinboard.core.util.DateFormatter
-import com.fibelatti.pinboard.features.linkding.data.BookmarkLocalMapper
-import com.fibelatti.pinboard.features.linkding.data.BookmarksDao
 import com.fibelatti.pinboard.features.posts.data.PostsDao
 import com.fibelatti.pinboard.features.posts.data.model.PostDtoMapper
 import com.fibelatti.pinboard.features.posts.domain.model.Post
@@ -36,11 +32,8 @@ import timber.log.Timber
 
 class ExportBookmarksUseCase @Inject constructor(
     @ApplicationContext context: Context,
-    private val appModeProvider: AppModeProvider,
     private val postDao: PostsDao,
     private val postDtoMapper: PostDtoMapper,
-    private val bookmarksDao: BookmarksDao,
-    private val bookmarksMapper: BookmarkLocalMapper,
     private val dateFormatter: DateFormatter,
 ) : UseCase<File?> {
 
@@ -64,14 +57,7 @@ class ExportBookmarksUseCase @Inject constructor(
     }.getOrNull()
 
     private suspend fun getPosts(): List<Post> {
-        val appMode: AppMode = appModeProvider.appMode.value
-        Timber.d("App mode: $appMode")
-
-        return if (appMode == AppMode.PINBOARD) {
-            postDao.getAllPosts().let(postDtoMapper::mapList)
-        } else {
-            bookmarksDao.getAllBookmarks().let(bookmarksMapper::mapList)
-        }
+        return postDao.getAllPosts().let(postDtoMapper::mapList)
     }
 
     private suspend fun createExportFile(): File = withContext(Dispatchers.IO) {
@@ -139,19 +125,9 @@ class ExportBookmarksUseCase @Inject constructor(
             }
         }
 
-        if (item.description.isNotBlank() || !item.notes.isNullOrBlank()) {
+        if (item.description.isNotBlank()) {
             dd {
-                text(
-                    buildString {
-                        append(item.description)
-
-                        if (!item.notes.isNullOrBlank()) {
-                            append("[linkding-notes]")
-                            append(item.notes)
-                            append("[/linkding-notes]")
-                        }
-                    },
-                )
+                text(item.description)
             }
         }
     }

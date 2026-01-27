@@ -79,8 +79,6 @@ const val KEY_ALPHABETIZE_TAGS = "ALPHABETIZE_TAGS"
 @Singleton
 class UserSharedPreferences @Inject constructor(private val sharedPreferences: SharedPreferences) {
 
-    private var currentLinkdingInstanceUrl: String? = null
-    private var currentLinkdingAuthToken: String? = null
     private var currentPinboardAuthToken: String? = null
     private var currentLastUpdate: String = ""
 
@@ -91,29 +89,6 @@ class UserSharedPreferences @Inject constructor(private val sharedPreferences: S
     var nostrNsec: String?
         get() = sharedPreferences.getString("NOSTR_NSEC", null)
         set(value) = sharedPreferences.edit { putString("NOSTR_NSEC", value) }
-
-    var linkdingInstanceUrl: String?
-        get() = sharedPreferences.getString("LINKDING_INSTANCE_URL", currentLinkdingInstanceUrl)
-        set(value) = sharedPreferences.put("LINKDING_INSTANCE_URL", value).also { currentLinkdingInstanceUrl = value }
-
-    var linkdingAuthToken: String?
-        get() {
-            val fallback = currentLinkdingAuthToken?.ifBlank { null }
-                ?: sharedPreferences.getString("AUTH_TOKEN", null)
-                    .takeIf { sharedPreferences.get("USE_LINKDING", false) }
-
-            return sharedPreferences.getString("LINKDING_AUTH_TOKEN", fallback)
-        }
-        set(value) {
-            currentLinkdingAuthToken = value
-            sharedPreferences.edit {
-                putString("LINKDING_AUTH_TOKEN", value)
-
-                if (value.isNullOrBlank()) {
-                    remove("AUTH_TOKEN")
-                }
-            }
-        }
 
     var pinboardAuthToken: String?
         get() {

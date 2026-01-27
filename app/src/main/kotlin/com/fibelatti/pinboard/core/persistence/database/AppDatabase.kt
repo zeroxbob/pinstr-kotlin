@@ -6,9 +6,6 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.fibelatti.pinboard.features.filters.data.SavedFilterDto
 import com.fibelatti.pinboard.features.filters.data.SavedFiltersDao
-import com.fibelatti.pinboard.features.linkding.data.BookmarkLocal
-import com.fibelatti.pinboard.features.linkding.data.BookmarkLocalFts
-import com.fibelatti.pinboard.features.linkding.data.BookmarksDao
 import com.fibelatti.pinboard.features.posts.data.PostsDao
 import com.fibelatti.pinboard.features.posts.data.model.PostDto
 import com.fibelatti.pinboard.features.posts.data.model.PostDtoFts
@@ -29,7 +26,6 @@ private const val DATABASE_VERSION_9 = 9 // Release 3.12.0 (Advanced search)
 @Database(
     entities = [
         PostDto::class, PostDtoFts::class,
-        BookmarkLocal::class, BookmarkLocalFts::class,
         SavedFilterDto::class,
     ],
     version = DATABASE_VERSION_9,
@@ -46,7 +42,6 @@ private const val DATABASE_VERSION_9 = 9 // Release 3.12.0 (Advanced search)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun postDao(): PostsDao
-    abstract fun linkdingBookmarksDao(): BookmarksDao
     abstract fun savedFiltersDao(): SavedFiltersDao
 }
 

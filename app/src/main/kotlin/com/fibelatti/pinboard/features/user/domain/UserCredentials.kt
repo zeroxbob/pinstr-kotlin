@@ -4,8 +4,6 @@ import com.fibelatti.pinboard.core.AppMode
 
 data class UserCredentials(
     val pinboardAuthToken: String?,
-    val linkdingInstanceUrl: String?,
-    val linkdingAuthToken: String?,
     val nostrNsec: String? = null,
     val appReviewMode: Boolean = false,
 ) {
@@ -13,7 +11,6 @@ data class UserCredentials(
     fun getConnectedServices(): Set<AppMode> = buildSet {
         if (appReviewMode || !nostrNsec.isNullOrBlank()) add(AppMode.NO_API)
         if (pinboardAuthToken != null) add(AppMode.PINBOARD)
-        if (linkdingAuthToken != null) add(AppMode.LINKDING)
     }
 
     fun hasAuthToken(): Boolean = getConnectedServices().isNotEmpty()

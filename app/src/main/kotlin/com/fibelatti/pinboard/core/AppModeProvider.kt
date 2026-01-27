@@ -66,10 +66,6 @@ class AppModeProvider @Inject constructor(
                 AppMode.PINBOARD
             }
 
-            !credentials.linkdingAuthToken.isNullOrBlank() && (selection == AppMode.LINKDING || selection == null) -> {
-                AppMode.LINKDING
-            }
-
             else -> AppMode.UNSET
         }
     }

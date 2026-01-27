@@ -26,17 +26,10 @@ class Login @Inject constructor(
         Timber.d("Logging in (params=$params)")
         val appMode = when (params) {
             is PinboardParams -> AppMode.PINBOARD
-            is LinkdingParams -> AppMode.LINKDING
             is NostrParams -> AppMode.NO_API
         }
         when (params) {
             is PinboardParams -> {
-                userRepository.setAuthToken(appMode = appMode, authToken = params.authToken.trim())
-                appModeProvider.setSelection(appMode = appMode)
-            }
-
-            is LinkdingParams -> {
-                userRepository.linkdingInstanceUrl = params.instanceUrl.trim()
                 userRepository.setAuthToken(appMode = appMode, authToken = params.authToken.trim())
                 appModeProvider.setSelection(appMode = appMode)
             }
@@ -72,8 +65,6 @@ class Login @Inject constructor(
     }
 
     data class PinboardParams(override val authToken: String) : Params()
-
-    data class LinkdingParams(override val authToken: String, val instanceUrl: String) : Params()
 
     data class NostrParams(override val authToken: String) : Params()
 }

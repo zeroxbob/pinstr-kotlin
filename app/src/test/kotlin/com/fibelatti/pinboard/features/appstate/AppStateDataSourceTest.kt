@@ -125,9 +125,9 @@ internal class AppStateDataSourceTest {
         appStateDataSource.appState.test {
             skipItems(1)
 
-            appModeFlow.value = AppMode.LINKDING
+            appModeFlow.value = AppMode.PINBOARD
 
-            assertThat(awaitItem()).isEqualTo(expectedInitialState.copy(appMode = AppMode.LINKDING))
+            assertThat(awaitItem()).isEqualTo(expectedInitialState.copy(appMode = AppMode.PINBOARD))
         }
     }
 

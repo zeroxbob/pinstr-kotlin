@@ -3,7 +3,6 @@ package com.fibelatti.pinboard.features.tags.data
 import com.fibelatti.core.functional.Result
 import com.fibelatti.pinboard.core.AppMode
 import com.fibelatti.pinboard.core.AppModeProvider
-import com.fibelatti.pinboard.features.linkding.data.TagsDataSourceLinkdingApi
 import com.fibelatti.pinboard.features.tags.domain.TagsRepository
 import com.fibelatti.pinboard.features.tags.domain.model.Tag
 import javax.inject.Inject
@@ -16,7 +15,6 @@ import kotlinx.coroutines.runBlocking
 @Singleton
 internal class TagsDataSourceProxy @Inject constructor(
     private val tagsDataSourcePinboardApi: Provider<TagsDataSourcePinboardApi>,
-    private val tagsDataSourceLinkdingApi: Provider<TagsDataSourceLinkdingApi>,
     private val tagsDataSourceNoApi: Provider<TagsDataSourceNoApi>,
     private val appModeProvider: AppModeProvider,
 ) : TagsRepository {
@@ -32,7 +30,6 @@ internal class TagsDataSourceProxy @Inject constructor(
                 ?: when (appMode) {
                     AppMode.NO_API -> tagsDataSourceNoApi.get()
                     AppMode.PINBOARD -> tagsDataSourcePinboardApi.get()
-                    AppMode.LINKDING -> tagsDataSourceLinkdingApi.get()
                     AppMode.UNSET -> throw IllegalStateException()
                 }.also {
                     currentAppMode = appMode

@@ -90,21 +90,6 @@ private fun BookmarkDescriptionScreen(
             textSize = MaterialTheme.typography.bodyLarge.fontSize,
         )
 
-        if (AppMode.LINKDING == appMode && !notes.isNullOrBlank()) {
-            HorizontalDivider(
-                modifier = Modifier.padding(top = 16.dp),
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-
-            TextWithBlockquote(
-                text = notes,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                textColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                textSize = MaterialTheme.typography.bodyLarge.fontSize,
-            )
-        }
     }
 }
 

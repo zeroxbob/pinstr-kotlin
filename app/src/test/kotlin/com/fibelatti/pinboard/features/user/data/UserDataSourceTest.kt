@@ -33,8 +33,6 @@ internal class UserDataSourceTest {
 
     private val mockUserSharedPreferences = mockk<UserSharedPreferences>(relaxed = true) {
         every { appReviewMode } returns false
-        every { linkdingInstanceUrl } returns "linkding-url"
-        every { linkdingAuthToken } returns "linkding-token"
         every { pinboardAuthToken } returns "pinboard-token"
         every { lastUpdate } returns ""
         every { periodicSync } returns 0L
@@ -90,8 +88,6 @@ internal class UserDataSourceTest {
             assertThat(userDataSource.userCredentials.first()).isEqualTo(
                 UserCredentials(
                     pinboardAuthToken = "pinboard-token",
-                    linkdingInstanceUrl = "linkding-url",
-                    linkdingAuthToken = "linkding-token",
                     appReviewMode = false,
                 ),
             )
@@ -105,32 +101,6 @@ internal class UserDataSourceTest {
 
     @Nested
     inner class MethodTests {
-
-        @Nested
-        inner class LinkdingInstanceUrlTests {
-
-            @Test
-            fun `WHEN useLinkding is called THEN UserSharedPreferences is returned`() {
-                val value = randomString()
-
-                // GIVEN
-                every { mockUserSharedPreferences.linkdingInstanceUrl } returns value
-
-                // THEN
-                assertThat(userDataSource.linkdingInstanceUrl).isEqualTo(value)
-            }
-
-            @Test
-            fun `WHEN linkdingInstanceUrl is called THEN UserSharedPreferences is set`() {
-                val value = randomString()
-
-                // WHEN
-                userDataSource.linkdingInstanceUrl = value
-
-                // THEN
-                verify { mockUserSharedPreferences.linkdingInstanceUrl = value }
-            }
-        }
 
         @Nested
         inner class LastUpdate {
@@ -754,7 +724,6 @@ internal class UserDataSourceTest {
                 verify {
                     mockUserSharedPreferences.appReviewMode = true
                     mockUserSharedPreferences.pinboardAuthToken = null
-                    mockUserSharedPreferences.linkdingAuthToken = null
                 }
             }
 
@@ -764,15 +733,6 @@ internal class UserDataSourceTest {
 
                 verify {
                     mockUserSharedPreferences.pinboardAuthToken = "some-token"
-                }
-            }
-
-            @Test
-            fun `setAuthToken saves the auth token - linkding`() = runTest {
-                userDataSource.setAuthToken(appMode = AppMode.LINKDING, authToken = "some-token")
-
-                verify {
-                    mockUserSharedPreferences.linkdingAuthToken = "some-token"
                 }
             }
 
@@ -792,17 +752,6 @@ internal class UserDataSourceTest {
 
                 verify {
                     mockUserSharedPreferences.pinboardAuthToken = null
-                    mockUserSharedPreferences.lastUpdate = ""
-                }
-            }
-
-            @Test
-            fun `clearAuthToken clears the auth token and last updated - linkding`() = runTest {
-                userDataSource.clearAuthToken(appMode = AppMode.LINKDING)
-
-                verify {
-                    mockUserSharedPreferences.linkdingAuthToken = null
-                    mockUserSharedPreferences.linkdingInstanceUrl = null
                     mockUserSharedPreferences.lastUpdate = ""
                 }
             }

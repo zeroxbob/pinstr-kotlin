@@ -42,84 +42,6 @@ internal class UserSharedPreferencesTest {
     }
 
     @Test
-    fun `GIVEN LINKDING_INSTANCE_URL has no value WHEN linkdingInstanceUrl is called THEN null is returned`() {
-        // GIVEN
-        every { mockSharedPreferences.getString("LINKDING_INSTANCE_URL", null) } returns null
-
-        // THEN
-        assertThat(userSharedPreferences.linkdingInstanceUrl).isNull()
-    }
-
-    @Test
-    fun `GIVEN LINKDING_INSTANCE_URL has value WHEN linkdingInstanceUrl is called THEN value is returned`() {
-        // GIVEN
-        val result = randomString()
-        every { mockSharedPreferences.getString("LINKDING_INSTANCE_URL", null) } returns result
-
-        // THEN
-        assertThat(userSharedPreferences.linkdingInstanceUrl).isEqualTo(result)
-    }
-
-    @Test
-    fun `GIVEN AUTH_TOKEN had value AND USE_LINKDING was true WHEN linkdingAuthToken is called THEN value is returned`() {
-        // GIVEN
-        val result = randomString()
-        every { mockSharedPreferences.getString("AUTH_TOKEN", null) } returns result
-        every { mockSharedPreferences.get("USE_LINKDING", false) } returns true
-        every { mockSharedPreferences.get("LINKDING_AUTH_TOKEN", result) } returns result
-
-        // THEN
-        assertThat(userSharedPreferences.linkdingAuthToken).isEqualTo(result)
-    }
-
-    @Test
-    fun `GIVEN AUTH_TOKEN had value AND USE_LINKDING was false WHEN linkdingAuthToken is called THEN null is returned`() {
-        // GIVEN
-        val result = randomString()
-        every { mockSharedPreferences.getString("AUTH_TOKEN", null) } returns result
-        every { mockSharedPreferences.getBoolean("USE_LINKDING", false) } returns false
-        every { mockSharedPreferences.getString("LINKDING_AUTH_TOKEN", null) } returns null
-
-        // THEN
-        assertThat(userSharedPreferences.linkdingAuthToken).isNull()
-    }
-
-    @Test
-    fun `GIVEN LINKDING_AUTH_TOKEN has value WHEN linkdingAuthToken is called THEN value is returned`() {
-        // GIVEN
-        val result = randomString()
-        every { mockSharedPreferences.getString("AUTH_TOKEN", null) } returns null
-        every { mockSharedPreferences.getBoolean("USE_LINKDING", false) } returns false
-        every { mockSharedPreferences.getString("LINKDING_AUTH_TOKEN", null) } returns result
-
-        // THEN
-        assertThat(userSharedPreferences.linkdingAuthToken).isEqualTo(result)
-    }
-
-    @Test
-    fun `GIVEN LINKDING_AUTH_TOKEN has no value WHEN linkdingAuthToken is called THEN null is returned`() {
-        // GIVEN
-        every { mockSharedPreferences.getString("AUTH_TOKEN", null) } returns null
-        every { mockSharedPreferences.getBoolean("USE_LINKDING", false) } returns false
-        every { mockSharedPreferences.getString("LINKDING_AUTH_TOKEN", null) } returns null
-
-        // THEN
-        assertThat(userSharedPreferences.linkdingAuthToken).isNull()
-    }
-
-    @Test
-    fun `WHEN linkdingAuthToken is set THEN LINKDING_AUTH_TOKEN is set`() {
-        // GIVEN
-        val result = randomString()
-
-        // WHEN
-        userSharedPreferences.linkdingAuthToken = result
-
-        // THEN
-        verify { mockEditor.putString("LINKDING_AUTH_TOKEN", result) }
-    }
-
-    @Test
     fun `GIVEN AUTH_TOKEN had value AND USE_LINKDING was false WHEN pinboardAuthToken is called THEN value is returned`() {
         // GIVEN
         val result = randomString()
@@ -129,18 +51,6 @@ internal class UserSharedPreferencesTest {
 
         // THEN
         assertThat(userSharedPreferences.pinboardAuthToken).isEqualTo(result)
-    }
-
-    @Test
-    fun `GIVEN AUTH_TOKEN had value AND USE_LINKDING was true WHEN pinboardAuthToken is called THEN null is returned`() {
-        // GIVEN
-        val result = randomString()
-        every { mockSharedPreferences.getString("AUTH_TOKEN", null) } returns result
-        every { mockSharedPreferences.getBoolean("USE_LINKDING", false) } returns true
-        every { mockSharedPreferences.getString("PINBOARD_AUTH_TOKEN", null) } returns null
-
-        // THEN
-        assertThat(userSharedPreferences.pinboardAuthToken).isNull()
     }
 
     @Test

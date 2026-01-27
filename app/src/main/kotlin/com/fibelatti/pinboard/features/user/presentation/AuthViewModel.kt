@@ -113,9 +113,7 @@ class AuthViewModel @Inject constructor(
 
     data class ScreenState(
         val allowSwitching: Boolean = true,
-        val useLinkding: Boolean = false,
         val isLoading: Boolean = false,
         val apiTokenError: String? = null,
-        val instanceUrlError: String? = null,
     )
 }

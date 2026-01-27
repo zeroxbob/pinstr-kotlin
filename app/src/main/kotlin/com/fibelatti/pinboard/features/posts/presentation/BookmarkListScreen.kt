@@ -673,23 +673,6 @@ private fun BookmarkItem(
                     )
                 }
 
-                if (AppMode.LINKDING == appMode && !post.notes.isNullOrBlank()) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-
-                    TextWithBlockquote(
-                        text = post.notes,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        textColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 5,
-                        clickableLinks = false,
-                    )
-                }
-
                 if (!post.tags.isNullOrEmpty()) {
                     val tags = remember(post.tags, alphabetizeTags) {
                         post.tags
@@ -936,11 +919,6 @@ private fun SortingSelectionBottomSheet(
             add(ByDateAddedNewestFirst)
             add(ByDateAddedOldestFirst)
 
-            if (AppMode.LINKDING == appMode) {
-                add(ByDateModifiedNewestFirst)
-                add(ByDateModifiedOldestFirst)
-            }
-
             add(ByTitleAlphabetical)
             add(ByTitleAlphabeticalReverse)
         },
@@ -998,7 +976,7 @@ private fun BookmarkListScreenPreview(
 ) {
     ExtendedTheme {
         BookmarkListScreen(
-            appMode = AppMode.LINKDING,
+            appMode = AppMode.PINBOARD,
             posts = PostList(
                 list = posts,
                 totalCount = posts.size,
@@ -1008,7 +986,7 @@ private fun BookmarkListScreenPreview(
             isLoading = true,
             onScrollDirectionChanged = {},
             onNextPageRequested = {},
-            sortType = ByDateModifiedNewestFirst,
+            sortType = ByDateAddedNewestFirst,
             searchParameters = SearchParameters(term = "bookmark"),
             onActiveSearchClicked = {},
             onClearClicked = {},
@@ -1036,7 +1014,7 @@ private fun ActiveSearchPreview() {
                 onClearClicked = {},
                 onSaveClicked = {},
                 onShareClicked = {},
-                appMode = AppMode.LINKDING,
+                appMode = AppMode.PINBOARD,
             )
         }
     }
@@ -1054,9 +1032,9 @@ private fun BookmarkItemPreview(
                 .safeDrawingPadding(),
         ) {
             BookmarkItem(
-                appMode = AppMode.LINKDING,
+                appMode = AppMode.PINBOARD,
                 post = post,
-                sortType = ByDateModifiedNewestFirst,
+                sortType = ByDateAddedNewestFirst,
                 alphabetizeTags = true,
                 onPostClicked = {},
                 onPostLongClicked = {},
