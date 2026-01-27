@@ -5,8 +5,6 @@ import androidx.room.Room
 import com.fibelatti.pinboard.BuildConfig
 import com.fibelatti.pinboard.core.persistence.database.AppDatabase
 import com.fibelatti.pinboard.core.persistence.database.DATABASE_NAME
-import com.fibelatti.pinboard.core.persistence.database.DATABASE_VERSION_1
-import com.fibelatti.pinboard.core.persistence.database.DATABASE_VERSION_2
 import com.fibelatti.pinboard.core.persistence.database.DatabaseResetCallback
 import com.fibelatti.pinboard.features.filters.data.SavedFiltersDao
 import com.fibelatti.pinboard.features.posts.data.PostsDao
@@ -28,7 +26,7 @@ object DatabaseModule {
         application: Application,
         databaseResetCallback: DatabaseResetCallback,
     ): AppDatabase = Room.databaseBuilder(application, AppDatabase::class.java, DATABASE_NAME)
-        .fallbackToDestructiveMigrationFrom(dropAllTables = true, DATABASE_VERSION_1, DATABASE_VERSION_2)
+        .fallbackToDestructiveMigration(dropAllTables = true)
         .addCallback(databaseResetCallback)
         .apply {
             if (BuildConfig.DEBUG) {
