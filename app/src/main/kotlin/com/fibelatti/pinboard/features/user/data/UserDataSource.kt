@@ -3,6 +3,7 @@ package com.fibelatti.pinboard.features.user.data
 import com.fibelatti.pinboard.core.AppMode
 import com.fibelatti.pinboard.core.android.Appearance
 import com.fibelatti.pinboard.core.android.PreferredDateFormat
+import com.fibelatti.pinboard.core.persistence.SecureStorage
 import com.fibelatti.pinboard.core.persistence.UserSharedPreferences
 import com.fibelatti.pinboard.features.appstate.ByDateAddedNewestFirst
 import com.fibelatti.pinboard.features.appstate.ByDateAddedOldestFirst
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.update
 @Singleton
 class UserDataSource @Inject constructor(
     private val userSharedPreferences: UserSharedPreferences,
+    private val secureStorage: SecureStorage,
 ) : UserRepository {
 
     private val _userCredentials = MutableStateFlow(getUserCredentials())
@@ -50,9 +52,9 @@ class UserDataSource @Inject constructor(
         }
 
     override var nostrNsec: String
-        get() = userSharedPreferences.nostrNsec.orEmpty()
+        get() = secureStorage.nostrNsec.orEmpty()
         set(value) {
-            userSharedPreferences.nostrNsec = value.ifBlank { null }
+            secureStorage.nostrNsec = value.ifBlank { null }
         }
 
     override var periodicSync: PeriodicSync
@@ -249,7 +251,7 @@ class UserDataSource @Inject constructor(
     private fun getUserCredentials(): UserCredentials = UserCredentials(
         pinboardAuthToken = userSharedPreferences.pinboardAuthToken,
         nostrPubkey = userSharedPreferences.nostrPubkey,
-        nostrNsec = userSharedPreferences.nostrNsec,
+        nostrNsec = secureStorage.nostrNsec,
         appReviewMode = userSharedPreferences.appReviewMode,
     )
 
@@ -286,7 +288,7 @@ class UserDataSource @Inject constructor(
                 userSharedPreferences.appReviewMode = true
                 userSharedPreferences.pinboardAuthToken = null
                 userSharedPreferences.nostrPubkey = null
-                userSharedPreferences.nostrNsec = null
+                secureStorage.nostrNsec = null
             }
 
             AppMode.PINBOARD == appMode -> userSharedPreferences.pinboardAuthToken = authToken.ifBlank { null }
@@ -307,7 +309,7 @@ class UserDataSource @Inject constructor(
 
             AppMode.NOSTR -> {
                 userSharedPreferences.nostrPubkey = null
-                userSharedPreferences.nostrNsec = null
+                secureStorage.nostrNsec = null
             }
 
             AppMode.NO_API -> {

@@ -216,6 +216,7 @@ dependencies {
     implementation(libs.work.runtime.ktx)
 
     implementation(libs.browser)
+    implementation(libs.security.crypto)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.runtime)
