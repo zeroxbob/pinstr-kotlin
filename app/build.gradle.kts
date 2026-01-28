@@ -237,6 +237,9 @@ dependencies {
     implementation(libs.ktor.client.okhttp)
     implementation(libs.okhttp)
 
+    // Nostr protocol library
+    implementation(libs.quartz)
+
     implementation(libs.bundles.coil)
     implementation(libs.jsoup)
 

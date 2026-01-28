@@ -1,15 +1,15 @@
 package com.fibelatti.pinboard.features.nostr.data
 
-import com.fibelatti.pinboard.features.nostr.data.model.NostrEvent
 import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.tags.domain.model.Tag
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 /**
- * Maps between Nostr events and domain models.
+ * Maps between Quartz Event objects and domain models.
  */
 class NostrEventMapper @Inject constructor() {
 
@@ -18,23 +18,26 @@ class NostrEventMapper @Inject constructor() {
     /**
      * Convert a NIP-B0 bookmark event (kind 39701) to a Post domain model.
      */
-    fun toPost(event: NostrEvent): Post? {
-        if (event.kind != NostrEvent.KIND_BOOKMARK) return null
+    fun toPost(event: Event): Post? {
+        if (event.kind.toInt() != NostrFilter.KIND_BOOKMARK) return null
 
         // The d-tag contains the URL without scheme
-        val dTag = event.dTag ?: return null
+        val dTag = event.tags.firstOrNull { it.size >= 2 && it[0] == "d" }?.get(1) ?: return null
 
         // Reconstruct URL (assume https)
         val url = "https://$dTag"
 
         // Get title from tag or use URL as fallback
-        val title = event.titleTag ?: dTag
+        val title = event.tags.firstOrNull { it.size >= 2 && it[0] == "title" }?.get(1) ?: dTag
 
-        // Topics become tags
-        val tags = event.topics.map { Tag(it) }.takeIf { it.isNotEmpty() }
+        // Topics (t-tags) become tags
+        val topics = event.tags
+            .filter { it.size >= 2 && it[0] == "t" }
+            .map { Tag(it[1]) }
+            .takeIf { it.isNotEmpty() }
 
         // Convert timestamp to ISO format
-        val dateAdded = formatTimestamp(event.created_at)
+        val dateAdded = formatTimestamp(event.createdAt)
 
         return Post(
             url = url,
@@ -44,7 +47,7 @@ class NostrEventMapper @Inject constructor() {
             dateAdded = dateAdded,
             private = false, // Nostr events are public by default
             readLater = false,
-            tags = tags,
+            tags = topics,
             pendingSync = null,
         )
     }

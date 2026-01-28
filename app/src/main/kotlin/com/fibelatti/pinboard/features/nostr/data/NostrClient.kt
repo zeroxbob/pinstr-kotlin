@@ -1,10 +1,8 @@
 package com.fibelatti.pinboard.features.nostr.data
 
-import com.fibelatti.pinboard.features.nostr.data.model.NostrEvent
-import com.fibelatti.pinboard.features.nostr.data.model.NostrFilter
-import com.fibelatti.pinboard.features.nostr.data.model.NostrMessage
 import com.fibelatti.pinboard.features.nostr.domain.DefaultRelays
 import com.fibelatti.pinboard.features.nostr.domain.RelayConfig
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,6 +12,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -27,33 +32,75 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 
 /**
+ * Simplified filter for Nostr relay queries.
+ * Uses Quartz Event for parsing responses.
+ */
+data class NostrFilter(
+    val kinds: List<Int>? = null,
+    val authors: List<String>? = null,
+    val limit: Int? = null,
+    val since: Long? = null,
+    val until: Long? = null,
+) {
+    fun toJson(): String = buildJsonObject {
+        kinds?.let { put("kinds", JsonArray(it.map { k -> JsonPrimitive(k) })) }
+        authors?.let { put("authors", JsonArray(it.map { a -> JsonPrimitive(a) })) }
+        limit?.let { put("limit", it) }
+        since?.let { put("since", it) }
+        until?.let { put("until", it) }
+    }.toString()
+
+    companion object {
+        const val KIND_BOOKMARK = 39701
+
+        fun bookmarksForAuthor(pubkey: String, limit: Int = 100): NostrFilter =
+            NostrFilter(
+                kinds = listOf(KIND_BOOKMARK),
+                authors = listOf(pubkey),
+                limit = limit,
+            )
+    }
+}
+
+/**
+ * Represents parsed relay messages.
+ */
+sealed class RelayMessage {
+    data class EventMessage(val subscriptionId: String, val event: Event) : RelayMessage()
+    data class EndOfStoredEvents(val subscriptionId: String) : RelayMessage()
+    data class Notice(val message: String) : RelayMessage()
+    data class Closed(val subscriptionId: String, val message: String) : RelayMessage()
+}
+
+/**
  * Client for communicating with Nostr relays over WebSocket.
+ * Uses Quartz library for event parsing.
  */
 @Singleton
 class NostrClient @Inject constructor(
     private val okHttpClient: OkHttpClient,
 ) {
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val json = Json { ignoreUnknownKeys = true }
 
     private val activeConnections = ConcurrentHashMap<String, WebSocket>()
-    private val subscriptionChannels = ConcurrentHashMap<String, Channel<NostrMessage>>()
+    private val subscriptionChannels = ConcurrentHashMap<String, Channel<RelayMessage>>()
 
     /**
      * Fetch events matching the given filter from configured relays.
-     * Returns a Flow of events as they arrive.
+     * Returns a Flow of Quartz Event objects as they arrive.
      */
     fun fetchEvents(
         filter: NostrFilter,
         relays: List<RelayConfig> = DefaultRelays.relays,
         timeoutMs: Long = 15_000,
-    ): Flow<NostrEvent> = flow {
+    ): Flow<Event> = flow {
         val subscriptionId = UUID.randomUUID().toString()
         Timber.tag(TAG).d("Starting subscription: $subscriptionId")
         Timber.tag(TAG).d("Filter: kinds=${filter.kinds}, authors=${filter.authors?.map { it.take(8) }}, limit=${filter.limit}")
 
         val events = mutableSetOf<String>() // Track by event ID to dedupe
-        val channel = Channel<NostrMessage>(Channel.UNLIMITED)
+        val channel = Channel<RelayMessage>(Channel.UNLIMITED)
         subscriptionChannels[subscriptionId] = channel
 
         try {
@@ -85,44 +132,41 @@ class NostrClient @Inject constructor(
                 } ?: break
 
                 when (message) {
-                    is NostrMessage.Event -> {
+                    is RelayMessage.EventMessage -> {
                         if (events.add(message.event.id)) {
                             Timber.tag(TAG).d("EVENT: kind=${message.event.kind}, id=${message.event.id.take(8)}...")
                             emit(message.event)
                         }
                     }
-                    is NostrMessage.EndOfStoredEvents -> {
+                    is RelayMessage.EndOfStoredEvents -> {
                         eoseCount++
                         Timber.tag(TAG).d("EOSE received ($eoseCount/${connectedRelays.size})")
                     }
-                    is NostrMessage.Closed -> {
+                    is RelayMessage.Closed -> {
                         Timber.tag(TAG).w("CLOSED: ${message.message}")
                         eoseCount++
                     }
-                    is NostrMessage.Notice -> {
+                    is RelayMessage.Notice -> {
                         Timber.tag(TAG).w("NOTICE: ${message.message}")
                     }
-                    else -> {}
                 }
             }
 
             Timber.tag(TAG).d("Subscription complete: received ${events.size} unique events")
         } finally {
-            // Clean up subscription
             closeSubscription(subscriptionId)
         }
     }
 
     /**
      * Fetch all events matching the filter and return as a list.
-     * Convenience method when you need all results at once.
      */
     suspend fun fetchAllEvents(
         filter: NostrFilter,
         relays: List<RelayConfig> = DefaultRelays.relays,
         timeoutMs: Long = 15_000,
-    ): List<NostrEvent> {
-        val events = mutableListOf<NostrEvent>()
+    ): List<Event> {
+        val events = mutableListOf<Event>()
         fetchEvents(filter, relays, timeoutMs).collect { events.add(it) }
         return events
     }
@@ -145,11 +189,15 @@ class NostrClient @Inject constructor(
                 Timber.tag(TAG).d("WebSocket OPEN: $relayUrl (${response.code})")
                 activeConnections[relayUrl] = webSocket
 
-                // Send subscription request
-                val reqMessage = NostrMessage.Request(subscriptionId, listOf(filter))
-                val json = reqMessage.toJson()
-                Timber.tag(TAG).d(">>> SEND to $relayUrl: $json")
-                webSocket.send(json)
+                // Send subscription request: ["REQ", <sub_id>, <filter>]
+                val reqJson = buildJsonArray {
+                    add("REQ")
+                    add(subscriptionId)
+                    add(json.parseToJsonElement(filter.toJson()))
+                }.toString()
+
+                Timber.tag(TAG).d(">>> SEND to $relayUrl: $reqJson")
+                webSocket.send(reqJson)
 
                 connected = true
                 if (continuation.isActive) {
@@ -158,20 +206,16 @@ class NostrClient @Inject constructor(
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                // Log the raw message (truncate if too long)
                 val logText = if (text.length > 500) "${text.take(500)}... (${text.length} chars)" else text
                 Timber.tag(TAG).d("<<< RECV from $relayUrl: $logText")
 
-                val message = NostrMessage.parse(text)
+                val message = parseRelayMessage(text)
                 if (message != null) {
-                    val channel = subscriptionChannels[subscriptionId]
-                    if (channel != null) {
-                        scope.launch {
-                            channel.send(message)
-                        }
+                    subscriptionChannels[subscriptionId]?.let { channel ->
+                        scope.launch { channel.send(message) }
                     }
                 } else {
-                    Timber.tag(TAG).w("Failed to parse message: $logText")
+                    Timber.tag(TAG).w("Failed to parse message")
                 }
             }
 
@@ -201,12 +245,48 @@ class NostrClient @Inject constructor(
         }
     }
 
+    private fun parseRelayMessage(text: String): RelayMessage? {
+        return try {
+            val array = json.decodeFromString<JsonArray>(text)
+            val type = (array[0] as? JsonPrimitive)?.content ?: return null
+
+            when (type) {
+                "EVENT" -> {
+                    val subscriptionId = (array[1] as? JsonPrimitive)?.content ?: return null
+                    val eventJson = array[2].toString()
+                    // Use Quartz's Event.fromJson for parsing
+                    val event = Event.fromJson(eventJson)
+                    RelayMessage.EventMessage(subscriptionId, event)
+                }
+                "EOSE" -> {
+                    val subscriptionId = (array[1] as? JsonPrimitive)?.content ?: return null
+                    RelayMessage.EndOfStoredEvents(subscriptionId)
+                }
+                "NOTICE" -> {
+                    val message = (array[1] as? JsonPrimitive)?.content ?: ""
+                    RelayMessage.Notice(message)
+                }
+                "CLOSED" -> {
+                    val subscriptionId = (array[1] as? JsonPrimitive)?.content ?: return null
+                    val message = (array.getOrNull(2) as? JsonPrimitive)?.content ?: ""
+                    RelayMessage.Closed(subscriptionId, message)
+                }
+                else -> null
+            }
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Failed to parse relay message")
+            null
+        }
+    }
+
     private fun closeSubscription(subscriptionId: String) {
         Timber.tag(TAG).d("Closing subscription: $subscriptionId")
         subscriptionChannels.remove(subscriptionId)?.close()
 
-        val closeMessage = NostrMessage.Close(subscriptionId)
-        val closeJson = closeMessage.toJson()
+        val closeJson = buildJsonArray {
+            add("CLOSE")
+            add(subscriptionId)
+        }.toString()
 
         activeConnections.forEach { (url, socket) ->
             try {
@@ -218,9 +298,6 @@ class NostrClient @Inject constructor(
         }
     }
 
-    /**
-     * Close all connections and clean up resources.
-     */
     fun disconnect() {
         Timber.tag(TAG).d("Disconnecting all (${activeConnections.size} connections)")
         subscriptionChannels.values.forEach { it.close() }

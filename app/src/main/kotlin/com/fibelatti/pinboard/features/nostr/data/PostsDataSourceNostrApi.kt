@@ -10,7 +10,6 @@ import com.fibelatti.pinboard.core.functional.resultFrom
 import com.fibelatti.pinboard.core.network.InvalidRequestException
 import com.fibelatti.pinboard.core.util.DateFormatter
 import com.fibelatti.pinboard.features.appstate.SortType
-import com.fibelatti.pinboard.features.nostr.data.model.NostrFilter
 import com.fibelatti.pinboard.features.posts.data.PostsDao
 import com.fibelatti.pinboard.features.posts.data.model.PostDto
 import com.fibelatti.pinboard.features.posts.data.model.PostDtoMapper
