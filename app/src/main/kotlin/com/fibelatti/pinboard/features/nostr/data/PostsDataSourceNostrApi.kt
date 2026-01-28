@@ -45,7 +45,7 @@ class PostsDataSourceNostrApi @Inject constructor(
                 return Failure(InvalidRequestException())
             }
 
-            Timber.d("NostrDataSource: Fetching bookmarks for pubkey: $pubkey")
+            Timber.d("NostrDataSource: Fetching bookmarks for pubkey: ${pubkey.take(16)}...")
 
             val filter = NostrFilter.bookmarksForAuthor(pubkey, limit = 500)
             val events = nostrClient.fetchAllEvents(filter)

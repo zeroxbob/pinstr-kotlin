@@ -7,6 +7,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import timber.log.Timber
 
 /**
  * Maps between Quartz Event objects and domain models.
@@ -19,10 +20,19 @@ class NostrEventMapper @Inject constructor() {
      * Convert a NIP-B0 bookmark event (kind 39701) to a Post domain model.
      */
     fun toPost(event: Event): Post? {
-        if (event.kind.toInt() != NostrFilter.KIND_BOOKMARK) return null
+        Timber.d("NostrEventMapper: Processing event kind=${event.kind}, id=${event.id.take(8)}...")
+        if (event.kind != NostrFilter.KIND_BOOKMARK) {
+            Timber.d("NostrEventMapper: Skipping non-bookmark event (kind=${event.kind})")
+            return null
+        }
 
         // The d-tag contains the URL without scheme
-        val dTag = event.tags.firstOrNull { it.size >= 2 && it[0] == "d" }?.get(1) ?: return null
+        val dTag = event.tags.firstOrNull { it.size >= 2 && it[0] == "d" }?.get(1)
+        if (dTag == null) {
+            Timber.w("NostrEventMapper: Bookmark event missing d-tag, skipping")
+            return null
+        }
+        Timber.d("NostrEventMapper: d-tag=$dTag")
 
         // Reconstruct URL (assume https)
         val url = "https://$dTag"
@@ -39,7 +49,7 @@ class NostrEventMapper @Inject constructor() {
         // Convert timestamp to ISO format
         val dateAdded = formatTimestamp(event.createdAt)
 
-        return Post(
+        val post = Post(
             url = url,
             title = title,
             description = event.content,
@@ -50,6 +60,8 @@ class NostrEventMapper @Inject constructor() {
             tags = topics,
             pendingSync = null,
         )
+        Timber.d("NostrEventMapper: Mapped bookmark: url=$url, title=${title.take(30)}...")
+        return post
     }
 
     /**
