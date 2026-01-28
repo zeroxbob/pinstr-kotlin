@@ -309,6 +309,9 @@ class UserDataSource @Inject constructor(
 
             AppMode.NOSTR -> {
                 userSharedPreferences.nostrPubkey = null
+                userSharedPreferences.nostrSignerType = null
+                userSharedPreferences.nostrAmberPackage = null
+                userSharedPreferences.nostrBunkerUri = null
                 secureStorage.nostrNsec = null
             }
 

@@ -74,6 +74,17 @@
     <string name="auth_relay_url_hint">Relay URL (e.g. wss://relay.damus.io)</string>
     <string name="auth_relay_url_error">Please enter a valid relay URL.</string>
 
+    <string name="auth_method_amber">Login with Amber</string>
+    <string name="auth_method_amber_description">Use Amber app for secure signing (recommended)</string>
+    <string name="auth_method_bunker">Login with Bunker</string>
+    <string name="auth_method_bunker_description">Connect to a remote NIP-46 signer</string>
+    <string name="auth_method_nsec">Paste nsec</string>
+    <string name="auth_method_nsec_description">Enter your private key directly</string>
+    <string name="auth_bunker_hint">Bunker URI (bunker://...)</string>
+    <string name="auth_bunker_empty">Please enter a bunker URI.</string>
+    <string name="auth_bunker_invalid">Invalid bunker URI. Please check the format and try again.</string>
+    <string name="auth_bunker_description"><![CDATA[Paste your bunker connection string from your NIP-46 remote signer.]]></string>
+
     <!-- Posts -->
     <string name="posts_title_all">All Bookmarks</string>
     <string name="posts_title_recent">Recent Bookmarks</string>
