@@ -5,6 +5,7 @@ import com.fibelatti.pinboard.core.android.ConnectivityInfoProvider
 import com.fibelatti.pinboard.core.di.AppDispatchers
 import com.fibelatti.pinboard.core.di.Scope
 import com.fibelatti.pinboard.core.network.UnauthorizedPluginProvider
+import com.fibelatti.pinboard.features.posts.data.PostsDao
 import com.fibelatti.pinboard.features.user.domain.GetPreferredSortType
 import com.fibelatti.pinboard.features.user.domain.UserRepository
 import javax.inject.Inject
@@ -36,6 +37,7 @@ class AppStateDataSource @Inject constructor(
     private val appModeProvider: AppModeProvider,
     private val unauthorizedPluginProvider: UnauthorizedPluginProvider,
     private val getPreferredSortType: GetPreferredSortType,
+    private val postsDao: PostsDao,
 ) : AppStateRepository {
 
     private val reducer: MutableSharedFlow<suspend (AppState) -> AppState> = MutableSharedFlow()
@@ -82,6 +84,12 @@ class AppStateDataSource @Inject constructor(
                             appModeProvider.setSelection(appMode = null)
                             unauthorizedPluginProvider.disable(appMode = action.appMode)
                             userRepository.clearAuthToken(appMode = action.appMode)
+
+                            // Clear local posts cache when logging out
+                            if (action is UserLoggedOut) {
+                                postsDao.deleteAllPosts()
+                                Timber.d("Cleared posts cache on logout")
+                            }
 
                             when {
                                 action is UserLoginFailed -> appState.content
