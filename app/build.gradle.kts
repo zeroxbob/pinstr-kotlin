@@ -244,6 +244,9 @@ dependencies {
 
     implementation(libs.timber)
     debugImplementation(libs.leakcanary)
+    debugImplementation(libs.chucker)
+    releaseImplementation(libs.chucker.noop)
+    debugImplementation(libs.okhttp.logging)
 
     // Test
     testFixturesImplementation(libs.kotlin)
