@@ -38,12 +38,20 @@ class Login @Inject constructor(
             }
 
             is NostrParams -> {
-                // Convert nsec/npub to hex pubkey
-                val hexPubkey = convertToHexPubkey(params.pubkey.trim())
+                // Convert nsec/npub to hex pubkey and store credentials
+                val input = params.pubkey.trim()
+                val hexPubkey = convertToHexPubkey(input)
                 Timber.d("NostrParams: Storing pubkey: ${hexPubkey.take(16)}...")
                 userRepository.nostrPubkey = hexPubkey
+
+                // Store nsec for signing (only if input was nsec)
+                if (input.startsWith("nsec1")) {
+                    userRepository.nostrNsec = input
+                    Timber.d("NostrParams: Nsec stored for signing")
+                }
+
                 appModeProvider.setSelection(appMode = appMode)
-                Timber.d("NostrParams: Pubkey stored")
+                Timber.d("NostrParams: Credentials stored")
             }
         }
 

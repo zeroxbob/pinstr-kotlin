@@ -49,6 +49,12 @@ class UserDataSource @Inject constructor(
             _userCredentials.update { getUserCredentials() }
         }
 
+    override var nostrNsec: String
+        get() = userSharedPreferences.nostrNsec.orEmpty()
+        set(value) {
+            userSharedPreferences.nostrNsec = value.ifBlank { null }
+        }
+
     override var periodicSync: PeriodicSync
         get() = when (userSharedPreferences.periodicSync) {
             PeriodicSync.Off.hours -> PeriodicSync.Off

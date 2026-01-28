@@ -15,11 +15,11 @@ data class RelayConfig(
  */
 object DefaultRelays {
     val relays = listOf(
-        RelayConfig("wss://relay.damus.io", read = true, write = false),
-        RelayConfig("wss://relay.primal.net", read = true, write = false),
-        RelayConfig("wss://nos.lol", read = true, write = false),
-        RelayConfig("wss://relay.nostr.band", read = true, write = false),
-        RelayConfig("wss://purplepag.es", read = true, write = false),
-        RelayConfig("wss://nostr.wine", read = true, write = false),
+        RelayConfig("wss://relay.damus.io", read = true, write = true),
+        RelayConfig("wss://relay.primal.net", read = true, write = true),
+        RelayConfig("wss://nos.lol", read = true, write = true),
+        RelayConfig("wss://relay.nostr.band", read = true, write = false), // Read-only aggregator
+        RelayConfig("wss://purplepag.es", read = true, write = true),
+        RelayConfig("wss://nostr.wine", read = true, write = true),
     )
 }
