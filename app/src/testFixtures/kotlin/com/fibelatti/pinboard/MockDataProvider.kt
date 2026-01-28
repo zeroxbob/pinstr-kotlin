@@ -62,11 +62,13 @@ object MockDataProvider {
     val SAMPLE_TAGS_RESPONSE = SAMPLE_TAG_VALUES.joinToString(PinboardApiLiterals.TAG_SEPARATOR)
 
     const val SAMPLE_NOTE_ID = "some-id"
+
+    const val SAMPLE_NOSTR_PUBKEY = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1"
     // endregion
 
     // region Data classes
     fun createAppState(
-        appMode: AppMode = AppMode.PINBOARD,
+        appMode: AppMode = AppMode.NOSTR,
         content: Content = createPostListContent(),
         multiPanelAvailable: Boolean = false,
     ): AppState = AppState(

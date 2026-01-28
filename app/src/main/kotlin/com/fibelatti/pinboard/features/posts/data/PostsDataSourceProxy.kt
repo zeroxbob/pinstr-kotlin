@@ -4,6 +4,7 @@ import com.fibelatti.core.functional.Result
 import com.fibelatti.pinboard.core.AppMode
 import com.fibelatti.pinboard.core.AppModeProvider
 import com.fibelatti.pinboard.features.appstate.SortType
+import com.fibelatti.pinboard.features.nostr.data.PostsDataSourceNostrApi
 import com.fibelatti.pinboard.features.posts.domain.PostVisibility
 import com.fibelatti.pinboard.features.posts.domain.PostsRepository
 import com.fibelatti.pinboard.features.posts.domain.model.Post
@@ -21,6 +22,7 @@ import timber.log.Timber
 internal class PostsDataSourceProxy @Inject constructor(
     private val postsDataSourcePinboardApi: Provider<PostsDataSourcePinboardApi>,
     private val postsDataSourceNoApi: Provider<PostsDataSourceNoApi>,
+    private val postsDataSourceNostrApi: Provider<PostsDataSourceNostrApi>,
     private val appModeProvider: AppModeProvider,
 ) : PostsRepository {
 
@@ -37,6 +39,7 @@ internal class PostsDataSourceProxy @Inject constructor(
                 ?: when (appMode) {
                     AppMode.NO_API -> postsDataSourceNoApi.get()
                     AppMode.PINBOARD -> postsDataSourcePinboardApi.get()
+                    AppMode.NOSTR -> postsDataSourceNostrApi.get()
                     AppMode.UNSET -> throw IllegalStateException()
                 }.also {
                     Timber.d("Setting repository (appMode=$appMode)")

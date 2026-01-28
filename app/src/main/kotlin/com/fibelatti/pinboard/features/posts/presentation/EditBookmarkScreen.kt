@@ -490,8 +490,8 @@ private fun BookmarkBasicDetails(
         val urlFieldState = rememberTextFieldState(initialText = url)
         val urlSanitizationRegex = remember { "\\s".toRegex() }
 
-        // The Pinboard API uses the URL as the key; Changing the URL means creating a new bookmark
-        val isUrlInputEnabled = isNewBookmark || appMode != AppMode.PINBOARD
+        // Pinboard and Nostr use the URL as the key; changing the URL means creating a new bookmark
+        val isUrlInputEnabled = isNewBookmark || (appMode != AppMode.PINBOARD && appMode != AppMode.NOSTR)
 
         LaunchedEffect(Unit) {
             if (isUrlInputEnabled) {
@@ -605,7 +605,8 @@ private fun BookmarkFlags(
             .padding(start = 16.dp, top = 4.dp, end = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (AppMode.NO_API != appMode) {
+        // Nostr bookmarks are always public, so hide the private toggle
+        if (AppMode.NO_API != appMode && AppMode.NOSTR != appMode) {
             SettingToggle(
                 title = stringResource(id = R.string.posts_add_private),
                 description = null,
@@ -634,7 +635,7 @@ private fun EditBookmarkScreenPreview(
 ) {
     ExtendedTheme {
         EditBookmarkScreen(
-            appMode = AppMode.PINBOARD,
+            appMode = AppMode.NOSTR,
             post = post.copy(description = post.description.take(200)),
             isNewBookmark = true,
             isLoading = false,

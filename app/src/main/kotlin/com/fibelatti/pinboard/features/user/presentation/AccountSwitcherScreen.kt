@@ -56,14 +56,14 @@ fun AccountSwitcherScreen(
             onLogoutReviewModeClick = {
                 accountSwitcherViewModel.logout(appMode = AppMode.NO_API)
             },
-            onSelectPinboardClick = {
-                accountSwitcherViewModel.select(appMode = AppMode.PINBOARD)
+            onSelectNostrClick = {
+                accountSwitcherViewModel.select(appMode = AppMode.NOSTR)
             },
-            onLogoutPinboardClick = {
-                accountSwitcherViewModel.logout(appMode = AppMode.PINBOARD)
+            onLogoutNostrClick = {
+                accountSwitcherViewModel.logout(appMode = AppMode.NOSTR)
             },
-            onAddPinboardAccountClick = {
-                accountSwitcherViewModel.addAccount(appMode = AppMode.PINBOARD)
+            onAddNostrAccountClick = {
+                accountSwitcherViewModel.addAccount(appMode = AppMode.NOSTR)
             },
             modifier = Modifier.windowInsetsPadding(
                 WindowInsets.safeDrawing
@@ -78,9 +78,9 @@ private fun AccountSwitcherScreen(
     userCredentials: UserCredentials,
     onSelectReviewModeClick: () -> Unit,
     onLogoutReviewModeClick: () -> Unit,
-    onSelectPinboardClick: () -> Unit,
-    onLogoutPinboardClick: () -> Unit,
-    onAddPinboardAccountClick: () -> Unit,
+    onSelectNostrClick: () -> Unit,
+    onLogoutNostrClick: () -> Unit,
+    onAddNostrAccountClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -102,22 +102,22 @@ private fun AccountSwitcherScreen(
             return@LazyColumn
         }
 
-        if (AppMode.PINBOARD in userCredentials.getConnectedServices()) {
-            item(key = "pinboard-account") {
+        if (AppMode.NOSTR in userCredentials.getConnectedServices()) {
+            item(key = "nostr-account") {
                 AccountItem(
                     title = stringResource(R.string.nostr),
-                    onSelectClick = onSelectPinboardClick,
-                    onLogoutClick = onLogoutPinboardClick,
-                    description = userCredentials.getPinboardUsername(),
+                    onSelectClick = onSelectNostrClick,
+                    onLogoutClick = onLogoutNostrClick,
+                    description = userCredentials.nostrPubkey?.take(16)?.let { "$it..." },
                     modifier = Modifier.animateItem(),
                 )
             }
         }
 
-        if (AppMode.PINBOARD !in userCredentials.getConnectedServices()) {
-            item(key = "add-pinboard-account") {
+        if (AppMode.NOSTR !in userCredentials.getConnectedServices()) {
+            item(key = "add-nostr-account") {
                 FilledTonalButton(
-                    onClick = onAddPinboardAccountClick,
+                    onClick = onAddNostrAccountClick,
                     shapes = ExtendedTheme.defaultButtonShapes,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -191,17 +191,18 @@ private fun AccountItem(
 @ThemePreviews
 @DevicePreviews
 @Composable
-private fun AccountSwitcherScreenPinboardOnlyPreview() {
+private fun AccountSwitcherScreenNostrOnlyPreview() {
     ExtendedTheme {
         AccountSwitcherScreen(
             userCredentials = UserCredentials(
-                pinboardAuthToken = "pinboard-token",
+                pinboardAuthToken = null,
+                nostrPubkey = "abc123def456abc123def456abc123def456abc123def456abc123def456abc1",
             ),
             onSelectReviewModeClick = {},
             onLogoutReviewModeClick = {},
-            onSelectPinboardClick = {},
-            onLogoutPinboardClick = {},
-            onAddPinboardAccountClick = {},
+            onSelectNostrClick = {},
+            onLogoutNostrClick = {},
+            onAddNostrAccountClick = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }
@@ -214,14 +215,14 @@ private fun AccountSwitcherScreenReviewModePreview() {
     ExtendedTheme {
         AccountSwitcherScreen(
             userCredentials = UserCredentials(
-                pinboardAuthToken = "pinboard-token",
+                pinboardAuthToken = null,
                 appReviewMode = true,
             ),
             onSelectReviewModeClick = {},
             onLogoutReviewModeClick = {},
-            onSelectPinboardClick = {},
-            onLogoutPinboardClick = {},
-            onAddPinboardAccountClick = {},
+            onSelectNostrClick = {},
+            onLogoutNostrClick = {},
+            onAddNostrAccountClick = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }
@@ -230,17 +231,17 @@ private fun AccountSwitcherScreenReviewModePreview() {
 @ThemePreviews
 @DevicePreviews
 @Composable
-private fun AccountSwitcherScreenPreview() {
+private fun AccountSwitcherScreenEmptyPreview() {
     ExtendedTheme {
         AccountSwitcherScreen(
             userCredentials = UserCredentials(
-                pinboardAuthToken = "pinboard-token",
+                pinboardAuthToken = null,
             ),
             onSelectReviewModeClick = {},
             onLogoutReviewModeClick = {},
-            onSelectPinboardClick = {},
-            onLogoutPinboardClick = {},
-            onAddPinboardAccountClick = {},
+            onSelectNostrClick = {},
+            onLogoutNostrClick = {},
+            onAddNostrAccountClick = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }

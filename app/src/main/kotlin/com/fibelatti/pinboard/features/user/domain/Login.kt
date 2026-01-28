@@ -26,7 +26,7 @@ class Login @Inject constructor(
         Timber.d("Logging in (params=$params)")
         val appMode = when (params) {
             is PinboardParams -> AppMode.PINBOARD
-            is NostrParams -> AppMode.NO_API
+            is NostrParams -> AppMode.NOSTR
         }
         when (params) {
             is PinboardParams -> {
@@ -35,22 +35,28 @@ class Login @Inject constructor(
             }
 
             is NostrParams -> {
-                // For Nostr, just store the nsec and skip API validation
-                Timber.d("NostrParams: Storing auth token")
-                userRepository.setAuthToken(appMode = appMode, authToken = params.authToken.trim())
+                // For Nostr, store the pubkey (hex format)
+                Timber.d("NostrParams: Storing pubkey")
+                userRepository.nostrPubkey = params.pubkey.trim()
                 appModeProvider.setSelection(appMode = appMode)
-                Timber.d("NostrParams: Auth token stored, skipping API validation")
+                Timber.d("NostrParams: Pubkey stored")
             }
         }
 
-        // For Nostr, skip the API call and return success immediately
+        // For Nostr, skip the API validation and fetch bookmarks directly
         if (params is NostrParams) {
-            Timber.d("NostrParams: Returning success without API call")
-            return Success(Unit)
+            Timber.d("NostrParams: Fetching bookmarks from relays")
+            postsRepository.update()
                 .onSuccess {
-                    Timber.d("NostrParams: Running UserLoggedIn action")
-                    appStateRepository.runAction(UserLoggedIn(appMode = appMode))
+                    Timber.d("NostrParams: Fetch succeeded")
                 }
+                .onFailure {
+                    // Even if fetching fails, still log in (can retry later)
+                    Timber.w("NostrParams: Initial fetch failed, logging in anyway")
+                }
+            Timber.d("NostrParams: Running UserLoggedIn action")
+            appStateRepository.runAction(UserLoggedIn(appMode = appMode))
+            return Success(Unit)
         }
 
         return postsRepository.update()
@@ -59,12 +65,9 @@ class Login @Inject constructor(
             .onFailure { appStateRepository.runAction(UserLoginFailed(appMode = appMode)) }
     }
 
-    sealed class Params {
+    sealed class Params
 
-        abstract val authToken: String
-    }
+    data class PinboardParams(val authToken: String) : Params()
 
-    data class PinboardParams(override val authToken: String) : Params()
-
-    data class NostrParams(override val authToken: String) : Params()
+    data class NostrParams(val pubkey: String) : Params()
 }

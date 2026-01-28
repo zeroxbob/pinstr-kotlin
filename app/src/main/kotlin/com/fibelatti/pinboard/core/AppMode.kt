@@ -16,4 +16,9 @@ enum class AppMode {
      * The app uses the Pinboard API to store and retrieve bookmarks, backed by a local database.
      */
     PINBOARD,
+
+    /**
+     * The app uses Nostr relays to store and retrieve bookmarks (NIP-B0, kind 39701).
+     */
+    NOSTR,
 }

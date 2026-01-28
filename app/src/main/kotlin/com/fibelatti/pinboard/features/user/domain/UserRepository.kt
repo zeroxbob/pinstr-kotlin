@@ -18,6 +18,8 @@ interface UserRepository {
 
     var lastUpdate: String
 
+    var nostrPubkey: String
+
     var periodicSync: PeriodicSync
 
     var appearance: Appearance

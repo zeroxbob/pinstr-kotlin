@@ -44,12 +44,12 @@ class UserCredentialsTest {
     fun `connectedServices - nostr connected`() {
         val userCredentials = UserCredentials(
             pinboardAuthToken = null,
-            nostrNsec = "nsec1...",
+            nostrPubkey = "abc123def456",
         )
 
         val connectedServices = userCredentials.getConnectedServices()
 
-        assertThat(connectedServices).containsExactly(AppMode.NO_API)
+        assertThat(connectedServices).containsExactly(AppMode.NOSTR)
     }
 
     @Test

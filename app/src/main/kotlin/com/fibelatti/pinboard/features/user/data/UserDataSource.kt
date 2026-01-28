@@ -42,6 +42,13 @@ class UserDataSource @Inject constructor(
             userSharedPreferences.lastUpdate = value
         }
 
+    override var nostrPubkey: String
+        get() = userSharedPreferences.nostrPubkey.orEmpty()
+        set(value) {
+            userSharedPreferences.nostrPubkey = value.ifBlank { null }
+            _userCredentials.update { getUserCredentials() }
+        }
+
     override var periodicSync: PeriodicSync
         get() = when (userSharedPreferences.periodicSync) {
             PeriodicSync.Off.hours -> PeriodicSync.Off
@@ -235,6 +242,7 @@ class UserDataSource @Inject constructor(
 
     private fun getUserCredentials(): UserCredentials = UserCredentials(
         pinboardAuthToken = userSharedPreferences.pinboardAuthToken,
+        nostrPubkey = userSharedPreferences.nostrPubkey,
         nostrNsec = userSharedPreferences.nostrNsec,
         appReviewMode = userSharedPreferences.appReviewMode,
     )
@@ -271,12 +279,13 @@ class UserDataSource @Inject constructor(
             "app_review_mode" == authToken -> {
                 userSharedPreferences.appReviewMode = true
                 userSharedPreferences.pinboardAuthToken = null
+                userSharedPreferences.nostrPubkey = null
                 userSharedPreferences.nostrNsec = null
             }
 
             AppMode.PINBOARD == appMode -> userSharedPreferences.pinboardAuthToken = authToken.ifBlank { null }
 
-            AppMode.NO_API == appMode -> userSharedPreferences.nostrNsec = authToken.ifBlank { null }
+            AppMode.NOSTR == appMode -> userSharedPreferences.nostrPubkey = authToken.ifBlank { null }
 
             else -> Unit
         }
@@ -290,9 +299,13 @@ class UserDataSource @Inject constructor(
                 userSharedPreferences.pinboardAuthToken = null
             }
 
+            AppMode.NOSTR -> {
+                userSharedPreferences.nostrPubkey = null
+                userSharedPreferences.nostrNsec = null
+            }
+
             AppMode.NO_API -> {
                 userSharedPreferences.appReviewMode = false
-                userSharedPreferences.nostrNsec = null
             }
 
             else -> Unit

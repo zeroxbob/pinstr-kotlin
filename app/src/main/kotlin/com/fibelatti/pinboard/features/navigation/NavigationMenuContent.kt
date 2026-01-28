@@ -126,7 +126,7 @@ private fun NavigationMenuContent(
     ) {
         val serviceName = remember(appMode) {
             when (appMode) {
-                AppMode.PINBOARD -> R.string.nostr
+                AppMode.NOSTR -> R.string.nostr
                 else -> null
             }
         }
@@ -158,7 +158,8 @@ private fun NavigationMenuContent(
             iconRes = R.drawable.ic_bookmarks,
         )
 
-        if (AppMode.NO_API != appMode) {
+        // Nostr bookmarks are always public, so hide public/private filters
+        if (AppMode.NO_API != appMode && AppMode.NOSTR != appMode) {
             MenuItem(
                 textRes = R.string.menu_navigation_public,
                 onClick = onPublicClicked,
@@ -182,27 +183,11 @@ private fun NavigationMenuContent(
             textRes = R.string.menu_navigation_untagged,
             onClick = onUntaggedClicked,
             iconRes = R.drawable.ic_bookmarks,
-            shape = if (AppMode.PINBOARD == appMode) {
-                RoundedCornerShape(2.dp)
-            } else {
-                MaterialTheme.shapes.medium.copy(
-                    topStart = CornerSize(2.dp),
-                    topEnd = CornerSize(2.dp),
-                )
-            },
+            shape = MaterialTheme.shapes.medium.copy(
+                topStart = CornerSize(2.dp),
+                topEnd = CornerSize(2.dp),
+            ),
         )
-
-        if (AppMode.PINBOARD == appMode) {
-            MenuItem(
-                textRes = R.string.menu_navigation_popular,
-                onClick = onPopularClicked,
-                iconRes = R.drawable.ic_bookmarks,
-                shape = MaterialTheme.shapes.medium.copy(
-                    topStart = CornerSize(2.dp),
-                    topEnd = CornerSize(2.dp),
-                ),
-            )
-        }
 
         Spacer(modifier = Modifier.height(30.dp))
 
@@ -220,27 +205,11 @@ private fun NavigationMenuContent(
             textRes = R.string.menu_navigation_tags,
             onClick = onTagsClicked,
             iconRes = R.drawable.ic_tag,
-            shape = if (AppMode.PINBOARD == appMode) {
-                RoundedCornerShape(2.dp)
-            } else {
-                MaterialTheme.shapes.medium.copy(
-                    topStart = CornerSize(2.dp),
-                    topEnd = CornerSize(2.dp),
-                )
-            },
+            shape = MaterialTheme.shapes.medium.copy(
+                topStart = CornerSize(2.dp),
+                topEnd = CornerSize(2.dp),
+            ),
         )
-
-        if (AppMode.PINBOARD == appMode) {
-            MenuItem(
-                textRes = R.string.menu_navigation_notes,
-                onClick = onNotesClicked,
-                iconRes = R.drawable.ic_notes,
-                shape = MaterialTheme.shapes.medium.copy(
-                    topStart = CornerSize(2.dp),
-                    topEnd = CornerSize(2.dp),
-                ),
-            )
-        }
 
         Spacer(modifier = Modifier.height(30.dp))
 
@@ -392,7 +361,7 @@ private fun MenuItem(
 private fun NavigationMenuContentPreview() {
     ExtendedTheme {
         NavigationMenuContent(
-            appMode = AppMode.PINBOARD,
+            appMode = AppMode.NOSTR,
             onAllClicked = {},
             onRecentClicked = {},
             onPublicClicked = {},

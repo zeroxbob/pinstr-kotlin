@@ -98,8 +98,8 @@ class AuthViewModelTest : BaseViewModelTest() {
             // GIVEN
             coEvery {
                 mockLogin(
-                    Login.PinboardParams(
-                        authToken = SAMPLE_API_TOKEN,
+                    Login.NostrParams(
+                        pubkey = SAMPLE_API_TOKEN,
                     ),
                 )
             } returns Success(Unit)
@@ -113,8 +113,8 @@ class AuthViewModelTest : BaseViewModelTest() {
             // THEN
             coVerify {
                 mockLogin(
-                    Login.PinboardParams(
-                        authToken = SAMPLE_API_TOKEN,
+                    Login.NostrParams(
+                        pubkey = SAMPLE_API_TOKEN,
                     ),
                 )
             }
@@ -139,7 +139,7 @@ class AuthViewModelTest : BaseViewModelTest() {
                     }
                 }
 
-                coEvery { mockLogin(Login.PinboardParams(authToken = SAMPLE_API_TOKEN)) } returns Failure(error)
+                coEvery { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) } returns Failure(error)
                 every { mockResourceProvider.getString(R.string.auth_token_error) } returns "R.string.auth_token_error"
 
                 // WHEN
@@ -149,7 +149,7 @@ class AuthViewModelTest : BaseViewModelTest() {
                 )
 
                 // THEN
-                coVerify { mockLogin(Login.PinboardParams(authToken = SAMPLE_API_TOKEN)) }
+                coVerify { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) }
 
                 assertThat(viewModel.error.first()).isNull()
                 assertThat(viewModel.screenState.first()).isEqualTo(
@@ -169,7 +169,7 @@ class AuthViewModelTest : BaseViewModelTest() {
                     }
                 }
 
-                coEvery { mockLogin(Login.PinboardParams(authToken = SAMPLE_API_TOKEN)) } returns Failure(error)
+                coEvery { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) } returns Failure(error)
                 every { mockResourceProvider.getString(R.string.auth_token_error) } returns "R.string.auth_token_error"
 
                 // WHEN
@@ -179,7 +179,7 @@ class AuthViewModelTest : BaseViewModelTest() {
                 )
 
                 // THEN
-                coVerify { mockLogin(Login.PinboardParams(authToken = SAMPLE_API_TOKEN)) }
+                coVerify { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) }
 
                 assertThat(viewModel.error.first()).isNull()
                 assertThat(viewModel.screenState.first()).isEqualTo(
@@ -191,7 +191,7 @@ class AuthViewModelTest : BaseViewModelTest() {
         fun `GIVEN Login fails WHEN login is called THEN error should receive a value`() = runTest {
             // GIVEN
             val error = Exception()
-            coEvery { mockLogin(Login.PinboardParams(authToken = SAMPLE_API_TOKEN)) } returns Failure(error)
+            coEvery { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) } returns Failure(error)
 
             // WHEN
             viewModel.login(
@@ -200,7 +200,7 @@ class AuthViewModelTest : BaseViewModelTest() {
             )
 
             // THEN
-            coVerify { mockLogin(Login.PinboardParams(authToken = SAMPLE_API_TOKEN)) }
+            coVerify { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) }
 
             assertThat(viewModel.error.first()).isEqualTo(error)
             assertThat(viewModel.screenState.first()).isEqualTo(AuthViewModel.ScreenState())

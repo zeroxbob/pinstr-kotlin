@@ -90,6 +90,10 @@ class UserSharedPreferences @Inject constructor(private val sharedPreferences: S
         get() = sharedPreferences.getString("NOSTR_NSEC", null)
         set(value) = sharedPreferences.edit { putString("NOSTR_NSEC", value) }
 
+    var nostrPubkey: String?
+        get() = sharedPreferences.getString("NOSTR_PUBKEY", null)
+        set(value) = sharedPreferences.edit { putString("NOSTR_PUBKEY", value) }
+
     var pinboardAuthToken: String?
         get() {
             val fallback = currentPinboardAuthToken?.ifBlank { null }

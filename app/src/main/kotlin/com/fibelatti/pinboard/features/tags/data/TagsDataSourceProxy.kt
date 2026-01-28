@@ -29,6 +29,7 @@ internal class TagsDataSourceProxy @Inject constructor(
             currentRepository?.takeIf { currentAppMode == appMode }
                 ?: when (appMode) {
                     AppMode.NO_API -> tagsDataSourceNoApi.get()
+                    AppMode.NOSTR -> tagsDataSourceNoApi.get() // Nostr uses local tags like NO_API
                     AppMode.PINBOARD -> tagsDataSourcePinboardApi.get()
                     AppMode.UNSET -> throw IllegalStateException()
                 }.also {

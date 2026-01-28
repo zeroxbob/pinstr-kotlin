@@ -63,7 +63,7 @@ class AuthViewModel @Inject constructor(
         }
 
         scope.launch {
-            Timber.d("AuthViewModel: Starting login with nsec")
+            Timber.d("AuthViewModel: Starting login with pubkey")
             _screenState.update { current ->
                 current.copy(
                     isLoading = true,
@@ -71,7 +71,7 @@ class AuthViewModel @Inject constructor(
                 )
             }
 
-            val params = Login.NostrParams(authToken = apiToken)
+            val params = Login.NostrParams(pubkey = apiToken)
 
             Timber.d("AuthViewModel: Calling loginUseCase")
             loginUseCase(params)
