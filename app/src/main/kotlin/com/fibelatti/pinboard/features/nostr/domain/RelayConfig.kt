@@ -15,7 +15,7 @@ data class RelayConfig(
 object DefaultRelays {
     val relays = listOf(
         RelayConfig("wss://relay.damus.io", read = true, write = false),
-        RelayConfig("wss://relay.nostr.band", read = true, write = false),
+        RelayConfig("wss://relay.primal.net", read = true, write = false),
         RelayConfig("wss://nos.lol", read = true, write = false),
     )
 }
