@@ -86,13 +86,21 @@ class UserSharedPreferences @Inject constructor(private val sharedPreferences: S
         get() = sharedPreferences.getBoolean("APP_REVIEW_MODE", false)
         set(value) = sharedPreferences.put("APP_REVIEW_MODE", value)
 
-    var nostrNsec: String?
-        get() = sharedPreferences.getString("NOSTR_NSEC", null)
-        set(value) = sharedPreferences.edit { putString("NOSTR_NSEC", value) }
-
     var nostrPubkey: String?
         get() = sharedPreferences.getString("NOSTR_PUBKEY", null)
         set(value) = sharedPreferences.edit { putString("NOSTR_PUBKEY", value) }
+
+    var nostrSignerType: String?
+        get() = sharedPreferences.getString("NOSTR_SIGNER_TYPE", null)
+        set(value) = sharedPreferences.edit { putString("NOSTR_SIGNER_TYPE", value) }
+
+    var nostrAmberPackage: String?
+        get() = sharedPreferences.getString("NOSTR_AMBER_PACKAGE", null)
+        set(value) = sharedPreferences.edit { putString("NOSTR_AMBER_PACKAGE", value) }
+
+    var nostrBunkerUri: String?
+        get() = sharedPreferences.getString("NOSTR_BUNKER_URI", null)
+        set(value) = sharedPreferences.edit { putString("NOSTR_BUNKER_URI", value) }
 
     var pinboardAuthToken: String?
         get() {

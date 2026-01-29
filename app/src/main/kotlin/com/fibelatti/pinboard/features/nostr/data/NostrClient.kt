@@ -314,6 +314,122 @@ class NostrClient @Inject constructor(
         activeConnections.clear()
     }
 
+    /**
+     * Publish an event to the configured relays.
+     * Returns true if at least one relay accepted the event.
+     */
+    suspend fun publishEvent(
+        event: Event,
+        relays: List<RelayConfig> = DefaultRelays.relays,
+        timeoutMs: Long = 10_000,
+    ): Boolean {
+        Timber.tag(TAG).d("Publishing event: kind=${event.kind}, id=${event.id.take(8)}...")
+
+        val eventJson = buildJsonArray {
+            add("EVENT")
+            add(json.parseToJsonElement(event.toJson()))
+        }.toString()
+
+        val writeRelays = relays.filter { it.write }
+        if (writeRelays.isEmpty()) {
+            Timber.tag(TAG).w("No write relays configured!")
+            return false
+        }
+
+        var successCount = 0
+        val results = mutableMapOf<String, Boolean>()
+
+        writeRelays.forEach { relay ->
+            try {
+                val accepted = publishToRelay(relay.url, eventJson, event.id, timeoutMs)
+                results[relay.url] = accepted
+                if (accepted) successCount++
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to publish to ${relay.url}")
+                results[relay.url] = false
+            }
+        }
+
+        Timber.tag(TAG).d("Publish results: $successCount/${writeRelays.size} relays accepted")
+        return successCount > 0
+    }
+
+    private suspend fun publishToRelay(
+        relayUrl: String,
+        eventJson: String,
+        eventId: String,
+        timeoutMs: Long,
+    ): Boolean = suspendCancellableCoroutine { continuation ->
+        Timber.tag(TAG).d("Publishing to relay: $relayUrl")
+
+        val request = Request.Builder()
+            .url(relayUrl)
+            .build()
+
+        val listener = object : WebSocketListener() {
+            private var resumed = false
+
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                Timber.tag(TAG).d(">>> SEND EVENT to $relayUrl")
+                webSocket.send(eventJson)
+            }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                Timber.tag(TAG).d("<<< RECV from $relayUrl: $text")
+
+                // Parse OK response: ["OK", <event_id>, <accepted>, <message>]
+                try {
+                    val array = json.decodeFromString<JsonArray>(text)
+                    val type = (array[0] as? JsonPrimitive)?.content
+                    if (type == "OK" && array.size >= 3) {
+                        val receivedId = (array[1] as? JsonPrimitive)?.content
+                        val accepted = (array[2] as? JsonPrimitive)?.content?.toBooleanStrictOrNull() ?: false
+                        val message = (array.getOrNull(3) as? JsonPrimitive)?.content ?: ""
+
+                        if (receivedId == eventId && !resumed) {
+                            resumed = true
+                            Timber.tag(TAG).d("Event ${if (accepted) "accepted" else "rejected"} by $relayUrl: $message")
+                            webSocket.close(1000, "Done")
+                            continuation.resume(accepted)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.tag(TAG).w(e, "Failed to parse OK response")
+                }
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                Timber.tag(TAG).e(t, "WebSocket FAILURE publishing to $relayUrl")
+                if (!resumed) {
+                    resumed = true
+                    continuation.resume(false)
+                }
+            }
+
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                if (!resumed) {
+                    resumed = true
+                    continuation.resume(false)
+                }
+            }
+        }
+
+        val webSocket = okHttpClient.newWebSocket(request, listener)
+
+        // Timeout handler
+        scope.launch {
+            kotlinx.coroutines.delay(timeoutMs)
+            if (continuation.isActive) {
+                Timber.tag(TAG).w("Publish timeout for $relayUrl")
+                webSocket.close(1000, "Timeout")
+            }
+        }
+
+        continuation.invokeOnCancellation {
+            webSocket.close(1000, "Cancelled")
+        }
+    }
+
     companion object {
         private const val TAG = "NostrClient"
     }

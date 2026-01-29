@@ -20,6 +20,8 @@ interface UserRepository {
 
     var nostrPubkey: String
 
+    var nostrNsec: String
+
     var periodicSync: PeriodicSync
 
     var appearance: Appearance

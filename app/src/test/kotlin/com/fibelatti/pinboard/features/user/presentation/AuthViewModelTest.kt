@@ -1,5 +1,6 @@
 package com.fibelatti.pinboard.features.user.presentation
 
+import android.content.Context
 import app.cash.turbine.test
 import com.fibelatti.core.android.platform.ResourceProvider
 import com.fibelatti.core.functional.Failure
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.Test
 class AuthViewModelTest : BaseViewModelTest() {
 
     private val mockLogin = mockk<Login>()
+    private val mockContext = mockk<Context>(relaxed = true)
 
     private val appStateFlow = MutableStateFlow(createAppState(content = LoginContent()))
     private val mockAppStateRepository = mockk<AppStateRepository> {
@@ -44,6 +46,7 @@ class AuthViewModelTest : BaseViewModelTest() {
     private val viewModel = AuthViewModel(
         scope = TestScope(dispatcher),
         appStateRepository = mockAppStateRepository,
+        context = mockContext,
         loginUseCase = mockLogin,
         resourceProvider = mockResourceProvider,
     )
@@ -56,7 +59,7 @@ class AuthViewModelTest : BaseViewModelTest() {
             viewModel.screenState.test {
                 assertThat(awaitItem()).isEqualTo(
                     AuthViewModel.ScreenState(
-                        allowSwitching = true,
+                        isAmberInstalled = false,
                     ),
                 )
 
@@ -65,7 +68,7 @@ class AuthViewModelTest : BaseViewModelTest() {
 
                 assertThat(awaitItem()).isEqualTo(
                     AuthViewModel.ScreenState(
-                        allowSwitching = false,
+                        isAmberInstalled = false,
                     ),
                 )
             }
@@ -73,18 +76,15 @@ class AuthViewModelTest : BaseViewModelTest() {
     }
 
     @Nested
-    inner class LoginTests {
+    inner class LoginWithNsecTests {
 
         @Test
-        fun `GIVEN auth token is empty WHEN login is called THEN error state is emitted`() = runTest {
+        fun `GIVEN nsec is empty WHEN loginWithNsec is called THEN error state is emitted`() = runTest {
             // GIVEN
             every { mockResourceProvider.getString(R.string.auth_token_empty) } returns "R.string.auth_token_empty"
 
             // WHEN
-            viewModel.login(
-                apiToken = "",
-                instanceUrl = "",
-            )
+            viewModel.loginWithNsec(nsec = "")
 
             verify { mockLogin wasNot Called }
 
@@ -94,41 +94,33 @@ class AuthViewModelTest : BaseViewModelTest() {
         }
 
         @Test
-        fun `GIVEN Login is successful WHEN login is called THEN nothing else happens`() = runTest {
+        fun `GIVEN Login is successful WHEN loginWithNsec is called THEN nothing else happens`() = runTest {
             // GIVEN
             coEvery {
                 mockLogin(
-                    Login.NostrParams(
-                        pubkey = SAMPLE_API_TOKEN,
+                    Login.NostrNsecParams(
+                        nsec = SAMPLE_API_TOKEN,
                     ),
                 )
             } returns Success(Unit)
 
             // WHEN
-            viewModel.login(
-                apiToken = SAMPLE_API_TOKEN,
-                instanceUrl = "",
-            )
+            viewModel.loginWithNsec(nsec = SAMPLE_API_TOKEN)
 
             // THEN
             coVerify {
                 mockLogin(
-                    Login.NostrParams(
-                        pubkey = SAMPLE_API_TOKEN,
+                    Login.NostrNsecParams(
+                        nsec = SAMPLE_API_TOKEN,
                     ),
                 )
             }
 
             assertThat(viewModel.error.first()).isNull()
-            assertThat(viewModel.screenState.first()).isEqualTo(
-                AuthViewModel.ScreenState(
-                    isLoading = true,
-                ),
-            )
         }
 
         @Test
-        fun `GIVEN Login fails and error code is 401 WHEN login is called THEN apiTokenError should receive a value`() =
+        fun `GIVEN Login fails and error code is 401 WHEN loginWithNsec is called THEN apiTokenError should receive a value`() =
             runTest {
                 // GIVEN
                 val error = mockk<ResponseException> {
@@ -139,17 +131,14 @@ class AuthViewModelTest : BaseViewModelTest() {
                     }
                 }
 
-                coEvery { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) } returns Failure(error)
+                coEvery { mockLogin(Login.NostrNsecParams(nsec = SAMPLE_API_TOKEN)) } returns Failure(error)
                 every { mockResourceProvider.getString(R.string.auth_token_error) } returns "R.string.auth_token_error"
 
                 // WHEN
-                viewModel.login(
-                    apiToken = SAMPLE_API_TOKEN,
-                    instanceUrl = "",
-                )
+                viewModel.loginWithNsec(nsec = SAMPLE_API_TOKEN)
 
                 // THEN
-                coVerify { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) }
+                coVerify { mockLogin(Login.NostrNsecParams(nsec = SAMPLE_API_TOKEN)) }
 
                 assertThat(viewModel.error.first()).isNull()
                 assertThat(viewModel.screenState.first()).isEqualTo(
@@ -158,52 +147,96 @@ class AuthViewModelTest : BaseViewModelTest() {
             }
 
         @Test
-        fun `GIVEN Login fails and error code is 500 WHEN login is called THEN apiTokenError should receive a value`() =
-            runTest {
-                // GIVEN
-                val error = mockk<ResponseException> {
-                    every { response } returns mockk<HttpResponse> {
-                        every { status } returns mockk {
-                            every { value } returns 500
-                        }
-                    }
-                }
-
-                coEvery { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) } returns Failure(error)
-                every { mockResourceProvider.getString(R.string.auth_token_error) } returns "R.string.auth_token_error"
-
-                // WHEN
-                viewModel.login(
-                    apiToken = SAMPLE_API_TOKEN,
-                    instanceUrl = "",
-                )
-
-                // THEN
-                coVerify { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) }
-
-                assertThat(viewModel.error.first()).isNull()
-                assertThat(viewModel.screenState.first()).isEqualTo(
-                    AuthViewModel.ScreenState(apiTokenError = "R.string.auth_token_error"),
-                )
-            }
-
-        @Test
-        fun `GIVEN Login fails WHEN login is called THEN error should receive a value`() = runTest {
+        fun `GIVEN Login fails WHEN loginWithNsec is called THEN error should receive a value`() = runTest {
             // GIVEN
             val error = Exception()
-            coEvery { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) } returns Failure(error)
+            coEvery { mockLogin(Login.NostrNsecParams(nsec = SAMPLE_API_TOKEN)) } returns Failure(error)
 
             // WHEN
-            viewModel.login(
-                apiToken = SAMPLE_API_TOKEN,
-                instanceUrl = "",
-            )
+            viewModel.loginWithNsec(nsec = SAMPLE_API_TOKEN)
 
             // THEN
-            coVerify { mockLogin(Login.NostrParams(pubkey = SAMPLE_API_TOKEN)) }
+            coVerify { mockLogin(Login.NostrNsecParams(nsec = SAMPLE_API_TOKEN)) }
 
             assertThat(viewModel.error.first()).isEqualTo(error)
-            assertThat(viewModel.screenState.first()).isEqualTo(AuthViewModel.ScreenState())
+        }
+    }
+
+    @Nested
+    inner class LoginWithBunkerTests {
+
+        @Test
+        fun `GIVEN bunker URI is empty WHEN loginWithBunker is called THEN error state is emitted`() = runTest {
+            // GIVEN
+            every { mockResourceProvider.getString(R.string.auth_bunker_empty) } returns "R.string.auth_bunker_empty"
+
+            // WHEN
+            viewModel.loginWithBunker(bunkerUri = "")
+
+            verify { mockLogin wasNot Called }
+
+            assertThat(viewModel.screenState.first()).isEqualTo(
+                AuthViewModel.ScreenState(apiTokenError = "R.string.auth_bunker_empty"),
+            )
+        }
+
+        @Test
+        fun `GIVEN bunker URI is invalid WHEN loginWithBunker is called THEN error state is emitted`() = runTest {
+            // GIVEN
+            every { mockResourceProvider.getString(R.string.auth_bunker_invalid) } returns "R.string.auth_bunker_invalid"
+
+            // WHEN
+            viewModel.loginWithBunker(bunkerUri = "invalid-uri")
+
+            verify { mockLogin wasNot Called }
+
+            assertThat(viewModel.screenState.first()).isEqualTo(
+                AuthViewModel.ScreenState(apiTokenError = "R.string.auth_bunker_invalid"),
+            )
+        }
+
+        @Test
+        fun `GIVEN Login is successful WHEN loginWithBunker is called THEN nothing else happens`() = runTest {
+            // GIVEN
+            val bunkerUri = "bunker://abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234?relay=wss://relay.example.com"
+            coEvery {
+                mockLogin(Login.NostrBunkerParams(bunkerUri = bunkerUri))
+            } returns Success(Unit)
+
+            // WHEN
+            viewModel.loginWithBunker(bunkerUri = bunkerUri)
+
+            // THEN
+            coVerify {
+                mockLogin(Login.NostrBunkerParams(bunkerUri = bunkerUri))
+            }
+
+            assertThat(viewModel.error.first()).isNull()
+        }
+    }
+
+    @Nested
+    inner class MethodSelectionTests {
+
+        @Test
+        fun `WHEN selectLoginMethod is called THEN selectedMethod is updated`() = runTest {
+            // WHEN
+            viewModel.selectLoginMethod(NostrLoginMethod.NSEC)
+
+            // THEN
+            assertThat(viewModel.screenState.first().selectedMethod).isEqualTo(NostrLoginMethod.NSEC)
+        }
+
+        @Test
+        fun `WHEN clearSelectedMethod is called THEN selectedMethod is null`() = runTest {
+            // GIVEN
+            viewModel.selectLoginMethod(NostrLoginMethod.NSEC)
+
+            // WHEN
+            viewModel.clearSelectedMethod()
+
+            // THEN
+            assertThat(viewModel.screenState.first().selectedMethod).isNull()
         }
     }
 }

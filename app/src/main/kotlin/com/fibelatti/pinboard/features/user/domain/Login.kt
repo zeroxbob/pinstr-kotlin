@@ -1,5 +1,6 @@
 package com.fibelatti.pinboard.features.user.domain
 
+import com.fibelatti.core.functional.Failure
 import com.fibelatti.core.functional.Result
 import com.fibelatti.core.functional.Success
 import com.fibelatti.core.functional.UseCaseWithParams
@@ -11,6 +12,7 @@ import com.fibelatti.pinboard.core.AppModeProvider
 import com.fibelatti.pinboard.features.appstate.AppStateRepository
 import com.fibelatti.pinboard.features.appstate.UserLoggedIn
 import com.fibelatti.pinboard.features.appstate.UserLoginFailed
+import com.fibelatti.pinboard.features.nostr.signer.NostrSignerProvider
 import com.fibelatti.pinboard.features.posts.domain.PostsRepository
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -23,13 +25,16 @@ class Login @Inject constructor(
     private val appStateRepository: AppStateRepository,
     private val postsRepository: PostsRepository,
     private val appModeProvider: AppModeProvider,
+    private val nostrSignerProvider: NostrSignerProvider,
 ) : UseCaseWithParams<Login.Params, Result<Unit>> {
 
     override suspend operator fun invoke(params: Params): Result<Unit> {
         Timber.d("Logging in (params=$params)")
         val appMode = when (params) {
             is PinboardParams -> AppMode.PINBOARD
-            is NostrParams -> AppMode.NOSTR
+            is NostrNsecParams -> AppMode.NOSTR
+            is NostrAmberParams -> AppMode.NOSTR
+            is NostrBunkerParams -> AppMode.NOSTR
         }
         when (params) {
             is PinboardParams -> {
@@ -37,28 +42,68 @@ class Login @Inject constructor(
                 appModeProvider.setSelection(appMode = appMode)
             }
 
-            is NostrParams -> {
-                // Convert nsec/npub to hex pubkey
-                val hexPubkey = convertToHexPubkey(params.pubkey.trim())
-                Timber.d("NostrParams: Storing pubkey: ${hexPubkey.take(16)}...")
+            is NostrNsecParams -> {
+                // Convert nsec/npub to hex pubkey and store credentials
+                val input = params.nsec.trim()
+                val hexPubkey = convertToHexPubkey(input)
+                Timber.d("NostrNsecParams: Storing pubkey: ${hexPubkey.take(16)}...")
                 userRepository.nostrPubkey = hexPubkey
+
+                // Store nsec for signing and setup internal signer
+                if (input.startsWith("nsec1")) {
+                    nostrSignerProvider.setupInternalSigner(input)
+                    Timber.d("NostrNsecParams: Internal signer configured")
+                }
+
                 appModeProvider.setSelection(appMode = appMode)
-                Timber.d("NostrParams: Pubkey stored")
+                Timber.d("NostrNsecParams: Credentials stored")
+            }
+
+            is NostrAmberParams -> {
+                // Amber already provided the pubkey via intent
+                Timber.d("NostrAmberParams: Storing pubkey: ${params.pubkey.take(16)}...")
+                userRepository.nostrPubkey = params.pubkey
+
+                // Setup Amber signer
+                nostrSignerProvider.setupAmberSigner(params.pubkey, params.signerPackage)
+                Timber.d("NostrAmberParams: Amber signer configured (package=${params.signerPackage})")
+
+                appModeProvider.setSelection(appMode = appMode)
+                Timber.d("NostrAmberParams: Credentials stored")
+            }
+
+            is NostrBunkerParams -> {
+                // Parse bunker URI to get pubkey
+                val pubkey = parseBunkerPubkey(params.bunkerUri)
+                if (pubkey != null) {
+                    Timber.d("NostrBunkerParams: Storing pubkey: ${pubkey.take(16)}...")
+                    userRepository.nostrPubkey = pubkey
+
+                    // Setup Bunker signer
+                    nostrSignerProvider.setupBunkerSigner(params.bunkerUri)
+                    Timber.d("NostrBunkerParams: Bunker signer configured")
+
+                    appModeProvider.setSelection(appMode = appMode)
+                    Timber.d("NostrBunkerParams: Credentials stored")
+                } else {
+                    Timber.e("NostrBunkerParams: Failed to parse bunker URI")
+                    return Failure(IllegalArgumentException("Invalid bunker URI"))
+                }
             }
         }
 
         // For Nostr, skip the API validation and fetch bookmarks directly
-        if (params is NostrParams) {
-            Timber.d("NostrParams: Fetching bookmarks from relays")
+        if (params is NostrNsecParams || params is NostrAmberParams || params is NostrBunkerParams) {
+            Timber.d("Nostr: Fetching bookmarks from relays")
             postsRepository.update()
                 .onSuccess {
-                    Timber.d("NostrParams: Fetch succeeded")
+                    Timber.d("Nostr: Fetch succeeded")
                 }
                 .onFailure {
                     // Even if fetching fails, still log in (can retry later)
-                    Timber.w("NostrParams: Initial fetch failed, logging in anyway")
+                    Timber.w("Nostr: Initial fetch failed, logging in anyway")
                 }
-            Timber.d("NostrParams: Running UserLoggedIn action")
+            Timber.d("Nostr: Running UserLoggedIn action")
             appStateRepository.runAction(UserLoggedIn(appMode = appMode))
             return Success(Unit)
         }
@@ -73,7 +118,30 @@ class Login @Inject constructor(
 
     data class PinboardParams(val authToken: String) : Params()
 
-    data class NostrParams(val pubkey: String) : Params()
+    /** Login with nsec (private key) - stored locally for signing */
+    data class NostrNsecParams(val nsec: String) : Params()
+
+    /** Login with Amber (NIP-55) - uses external signer app */
+    data class NostrAmberParams(val pubkey: String, val signerPackage: String) : Params()
+
+    /** Login with Bunker (NIP-46) - uses remote signer */
+    data class NostrBunkerParams(val bunkerUri: String) : Params()
+
+    /**
+     * Parse pubkey from bunker URI.
+     * Format: bunker://<pubkey>?relay=wss://...&secret=...
+     */
+    private fun parseBunkerPubkey(bunkerUri: String): String? {
+        return try {
+            if (!bunkerUri.startsWith("bunker://")) return null
+            val afterScheme = bunkerUri.removePrefix("bunker://")
+            val pubkey = afterScheme.substringBefore("?")
+            if (pubkey.length == 64) pubkey else null
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse bunker URI")
+            null
+        }
+    }
 
     /**
      * Converts nsec (private key) or npub (public key) in bech32 format to hex pubkey.

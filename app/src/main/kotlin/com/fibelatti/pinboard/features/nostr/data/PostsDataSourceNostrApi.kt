@@ -10,6 +10,8 @@ import com.fibelatti.pinboard.core.functional.resultFrom
 import com.fibelatti.pinboard.core.network.InvalidRequestException
 import com.fibelatti.pinboard.core.util.DateFormatter
 import com.fibelatti.pinboard.features.appstate.SortType
+import com.fibelatti.pinboard.features.nostr.signer.NostrSignerProvider
+import com.fibelatti.pinboard.features.nostr.signer.SignerType
 import com.fibelatti.pinboard.features.posts.data.PostsDao
 import com.fibelatti.pinboard.features.posts.data.model.PostDto
 import com.fibelatti.pinboard.features.posts.data.model.PostDtoMapper
@@ -19,15 +21,15 @@ import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.posts.domain.model.PostListResult
 import com.fibelatti.pinboard.features.tags.domain.model.Tag
 import com.fibelatti.pinboard.features.user.domain.UserRepository
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.toList
 import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * PostsRepository implementation that fetches bookmarks from Nostr relays.
- * Currently read-only - publishing requires Amber integration for signing.
+ * PostsRepository implementation that fetches and publishes bookmarks to Nostr relays.
+ * Uses kind 39701 events (NIP-B0 bookmark format).
  */
 class PostsDataSourceNostrApi @Inject constructor(
     private val nostrClient: NostrClient,
@@ -36,6 +38,7 @@ class PostsDataSourceNostrApi @Inject constructor(
     private val postDtoMapper: PostDtoMapper,
     private val dateFormatter: DateFormatter,
     private val userRepository: UserRepository,
+    private val nostrSignerProvider: NostrSignerProvider,
 ) : PostsRepository {
 
     override suspend fun update(): Result<String> {
@@ -85,26 +88,91 @@ class PostsDataSourceNostrApi @Inject constructor(
     }
 
     override suspend fun add(post: Post): Result<Post> {
-        // TODO: Implement with Amber signing integration
-        // For now, save locally only (will sync when publishing is implemented)
-        return resultFrom {
-            val dto = PostDto(
-                href = post.url,
-                description = post.title,
-                extended = post.description,
-                hash = post.id.ifEmpty { post.url.hashCode().toString() },
-                time = post.dateAdded.ifEmpty { dateFormatter.nowAsDataFormat() },
-                shared = AppConfig.PinboardApiLiterals.YES,
-                toread = if (post.readLater == true) {
-                    AppConfig.PinboardApiLiterals.YES
-                } else {
-                    AppConfig.PinboardApiLiterals.NO
-                },
-                tags = post.tags?.joinToString(AppConfig.PinboardApiLiterals.TAG_SEPARATOR) { it.name }.orEmpty(),
-            )
-            postsDao.savePosts(listOf(dto))
-            postDtoMapper.map(dto)
+        return try {
+            val signerType = nostrSignerProvider.signerType
+            Timber.d("NostrDataSource: add() called, signer type=$signerType")
+
+            when (signerType) {
+                SignerType.INTERNAL -> {
+                    // Use internal signer for local signing
+                    val signer = nostrSignerProvider.getInternalSigner()
+                    if (signer == null) {
+                        Timber.w("NostrDataSource: Failed to get internal signer, saving locally only")
+                        return saveLocally(post)
+                    }
+
+                    // Build event tags following NIP-B0 bookmark format
+                    val tags = nostrEventMapper.toEventTags(post)
+                    val tagsArray = tags.map { it.toTypedArray() }.toTypedArray()
+
+                    Timber.d("NostrDataSource: Creating bookmark event for URL: ${post.url}")
+
+                    // Sign the event
+                    val event: Event = signer.sign(
+                        createdAt = System.currentTimeMillis() / 1000,
+                        kind = NostrFilter.KIND_BOOKMARK,
+                        tags = tagsArray,
+                        content = post.description,
+                    )
+
+                    Timber.d("NostrDataSource: Signed event id=${event.id.take(8)}...")
+
+                    // Publish to relays
+                    val published = nostrClient.publishEvent(event)
+
+                    if (published) {
+                        Timber.d("NostrDataSource: Event published successfully")
+                        // Save locally with the event ID
+                        val resultPost = post.copy(id = event.id, dateAdded = dateFormatter.nowAsDataFormat())
+                        saveLocally(resultPost)
+                    } else {
+                        Timber.w("NostrDataSource: Failed to publish to any relay, saving locally")
+                        saveLocally(post)
+                    }
+                }
+
+                SignerType.AMBER -> {
+                    // TODO: Implement Amber signing via intent
+                    // For now, save locally and mark as pending
+                    Timber.d("NostrDataSource: Amber signing not yet implemented, saving locally")
+                    saveLocally(post)
+                }
+
+                SignerType.BUNKER -> {
+                    // TODO: Implement Bunker signing via NIP-46
+                    // For now, save locally and mark as pending
+                    Timber.d("NostrDataSource: Bunker signing not yet implemented, saving locally")
+                    saveLocally(post)
+                }
+
+                SignerType.NONE -> {
+                    Timber.w("NostrDataSource: No signer configured, saving locally only")
+                    saveLocally(post)
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "NostrDataSource: Failed to add bookmark")
+            Failure(e)
         }
+    }
+
+    private suspend fun saveLocally(post: Post): Result<Post> = resultFrom {
+        val dto = PostDto(
+            href = post.url,
+            description = post.title,
+            extended = post.description,
+            hash = post.id.ifEmpty { post.url.hashCode().toString() },
+            time = post.dateAdded.ifEmpty { dateFormatter.nowAsDataFormat() },
+            shared = AppConfig.PinboardApiLiterals.YES,
+            toread = if (post.readLater == true) {
+                AppConfig.PinboardApiLiterals.YES
+            } else {
+                AppConfig.PinboardApiLiterals.NO
+            },
+            tags = post.tags?.joinToString(AppConfig.PinboardApiLiterals.TAG_SEPARATOR) { it.name }.orEmpty(),
+        )
+        postsDao.savePosts(listOf(dto))
+        postDtoMapper.map(dto)
     }
 
     override suspend fun delete(post: Post): Result<Unit> {
