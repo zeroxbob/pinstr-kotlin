@@ -102,6 +102,24 @@ class UserSharedPreferences @Inject constructor(private val sharedPreferences: S
         get() = sharedPreferences.getString("NOSTR_BUNKER_URI", null)
         set(value) = sharedPreferences.edit { putString("NOSTR_BUNKER_URI", value) }
 
+    /**
+     * Timestamp when vault was created (indicates vault exists).
+     * Null if no vault has been created yet.
+     */
+    var vaultCreatedAt: Long?
+        get() = sharedPreferences.getLong("VAULT_CREATED_AT", 0L).takeIf { it > 0 }
+        set(value) = sharedPreferences.edit {
+            if (value != null) putLong("VAULT_CREATED_AT", value) else remove("VAULT_CREATED_AT")
+        }
+
+    /**
+     * The vault's public key (hex format) for querying private bookmarks.
+     * Null if no vault has been created yet.
+     */
+    var vaultPubkey: String?
+        get() = sharedPreferences.getString("VAULT_PUBKEY", null)
+        set(value) = sharedPreferences.edit { putString("VAULT_PUBKEY", value) }
+
     var pinboardAuthToken: String?
         get() {
             val fallback = currentPinboardAuthToken?.ifBlank { null }

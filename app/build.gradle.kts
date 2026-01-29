@@ -241,6 +241,9 @@ dependencies {
     // Nostr protocol library
     implementation(libs.quartz)
 
+    // Argon2 for vault key derivation
+    implementation(libs.argon2kt)
+
     implementation(libs.bundles.coil)
     implementation(libs.jsoup)
 

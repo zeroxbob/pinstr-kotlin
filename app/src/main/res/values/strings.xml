@@ -85,6 +85,34 @@
     <string name="auth_bunker_invalid">Invalid bunker URI. Please check the format and try again.</string>
     <string name="auth_bunker_description"><![CDATA[Paste your bunker connection string from your NIP-46 remote signer.]]></string>
 
+    <!-- Vault -->
+    <string name="vault_setup_title">Create Your Vault</string>
+    <string name="vault_setup_description">Your vault encrypts your bookmarks so only you can read them. This passphrase cannot be recovered if forgotten.</string>
+    <string name="vault_passphrase_hint">Enter passphrase</string>
+    <string name="vault_passphrase_confirm_hint">Confirm passphrase</string>
+    <string name="vault_create_button">Create Vault</string>
+    <string name="vault_passphrase_too_short">Passphrase must be at least %d characters</string>
+    <string name="vault_passphrase_mismatch">Passphrases do not match</string>
+    <string name="vault_passphrase_empty">Please enter your passphrase</string>
+    <string name="vault_error_no_pubkey">Unable to get your public key. Please try logging in again.</string>
+    <string name="vault_error_create_failed">Failed to create vault. Please try again.</string>
+    <string name="vault_error_unlock_failed">Failed to unlock vault. Please try again.</string>
+    <string name="vault_error_wrong_passphrase">Incorrect passphrase. Please try again.</string>
+
+    <string name="vault_unlock_title">Unlock Vault</string>
+    <string name="vault_unlock_description">Enter your passphrase to access your private bookmarks.</string>
+    <string name="vault_unlock_button">Unlock</string>
+    <string name="vault_forgot_passphrase">Forgot passphrase?</string>
+    <string name="vault_reset_button">Reset Vault</string>
+    <string name="vault_reset_warning">This will delete all your local private bookmarks. You can recover them by entering the same passphrase you used when you first created your vault.</string>
+    <string name="vault_reset_confirm">Are you sure you want to reset your vault?</string>
+
+    <string name="vault_strength_too_short">Too short</string>
+    <string name="vault_strength_weak">Weak</string>
+    <string name="vault_strength_fair">Fair</string>
+    <string name="vault_strength_good">Good</string>
+    <string name="vault_strength_strong">Strong</string>
+
     <!-- Posts -->
     <string name="posts_title_all">All Bookmarks</string>
     <string name="posts_title_recent">Recent Bookmarks</string>

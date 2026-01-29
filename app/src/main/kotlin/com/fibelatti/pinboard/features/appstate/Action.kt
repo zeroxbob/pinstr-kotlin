@@ -31,6 +31,22 @@ data class UserLoggedOut(override val appMode: AppMode) : AuthAction()
 data class UserUnauthorized(override val appMode: AppMode) : AuthAction()
 // endregion AuthAction
 
+// region VaultAction
+sealed class VaultAction : Action()
+
+/** Navigate to vault setup screen */
+data object ViewVaultSetup : VaultAction()
+
+/** Navigate to vault unlock screen */
+data object ViewVaultUnlock : VaultAction()
+
+/** Vault was successfully created or unlocked */
+data object VaultReady : VaultAction()
+
+/** Reset vault (user forgot passphrase) */
+data object ResetVault : VaultAction()
+// endregion VaultAction
+
 // region NavigationAction
 sealed class NavigationAction : Action()
 

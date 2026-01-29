@@ -74,6 +74,7 @@ chucker = { module = "com.github.chuckerteam.chucker:library", version = "4.1.0"
 chucker-noop = { module = "com.github.chuckerteam.chucker:library-no-op", version = "4.1.0" }
 okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 quartz = { module = "com.vitorpamplona.quartz:quartz", version = "1.05.1" }
+argon2kt = { module = "com.lambdapioneer.argon2kt:argon2kt", version = "1.6.0" }
 
 junit = { module = "junit:junit", version = "4.13.2" }
 
