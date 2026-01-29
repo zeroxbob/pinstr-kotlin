@@ -52,10 +52,18 @@ data class NostrFilter(
 
     companion object {
         const val KIND_BOOKMARK = 39701
+        const val KIND_PRIVATE_BOOKMARK = 39702
 
         fun bookmarksForAuthor(pubkey: String, limit: Int = 100): NostrFilter =
             NostrFilter(
                 kinds = listOf(KIND_BOOKMARK),
+                authors = listOf(pubkey),
+                limit = limit,
+            )
+
+        fun privateBookmarksForAuthor(pubkey: String, limit: Int = 100): NostrFilter =
+            NostrFilter(
+                kinds = listOf(KIND_PRIVATE_BOOKMARK),
                 authors = listOf(pubkey),
                 limit = limit,
             )

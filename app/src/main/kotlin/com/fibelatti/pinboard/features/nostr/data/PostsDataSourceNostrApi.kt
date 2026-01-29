@@ -50,7 +50,8 @@ private data class EncryptedBookmarkContent(
 
 /**
  * PostsRepository implementation that fetches and publishes bookmarks to Nostr relays.
- * Uses kind 39701 events (NIP-B0 bookmark format).
+ * - Public bookmarks use kind 39701 (NIP-B0 bookmark format)
+ * - Private bookmarks use kind 39702 (encrypted, signed by vault key)
  */
 class PostsDataSourceNostrApi @Inject constructor(
     private val nostrClient: NostrClient,
@@ -139,7 +140,7 @@ class PostsDataSourceNostrApi @Inject constructor(
 
         Timber.d("NostrDataSource: Fetching private bookmarks for vault pubkey: ${vaultPubkey.take(8)}...")
 
-        val filter = NostrFilter.bookmarksForAuthor(vaultPubkey, limit = 500)
+        val filter = NostrFilter.privateBookmarksForAuthor(vaultPubkey, limit = 500)
         val events = nostrClient.fetchAllEvents(filter)
 
         Timber.d("NostrDataSource: Received ${events.size} private events")
@@ -289,11 +290,12 @@ class PostsDataSourceNostrApi @Inject constructor(
     /**
      * Adds a private (encrypted) bookmark using the vault identity.
      *
-     * Private bookmarks are:
+     * Private bookmarks (kind 39702) are:
      * - Signed with the vault's signing key (different from user's main key)
      * - ALL content is encrypted as JSON with AES-256-GCM (URL, title, description, tags)
      * - Only a random d-tag is visible - no metadata leakage
      * - The vault pubkey is the author, so only the user can find/decrypt them
+     * - Use separate kind (39702) from public (39701) to prevent clients showing scrambled text
      */
     private suspend fun addPrivateBookmark(post: Post): Result<Post> {
         val signingKey = vaultProvider.getSigningKey()
@@ -336,10 +338,10 @@ class PostsDataSourceNostrApi @Inject constructor(
 
         Timber.d("NostrDataSource: Creating private bookmark event (d-tag: ${randomIdentifier.take(8)}...)")
 
-        // Sign with vault identity
+        // Sign with vault identity using private bookmark kind
         val event: Event = vaultSigner.sign(
             createdAt = System.currentTimeMillis() / 1000,
-            kind = NostrFilter.KIND_BOOKMARK,
+            kind = NostrFilter.KIND_PRIVATE_BOOKMARK,
             tags = tagsArray,
             content = encryptedContent,
         )
