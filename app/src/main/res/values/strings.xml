@@ -158,6 +158,10 @@
     <string name="posts_add_encrypted">Encrypted</string>
     <string name="posts_add_encrypted_description">Only you can read this bookmark</string>
 
+    <string name="posts_view_json">View event JSON</string>
+    <string name="posts_json_title">Nostr Event</string>
+    <string name="posts_json_not_available">Event data not available</string>
+
     <string name="posts_add_non_editable_url">To edit the URL, visit Pinstr web app at pinstr.co.</string>
 
     <string name="posts_add_tags">New tag</string>

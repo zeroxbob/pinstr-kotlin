@@ -22,13 +22,14 @@ private const val DATABASE_VERSION_7 = 7 // Release 3.2.0
 private const val DATABASE_VERSION_8 = 8 // Release 3.8.3
 private const val DATABASE_VERSION_9 = 9 // Release 3.12.0 (Advanced search)
 private const val DATABASE_VERSION_10 = 10 // Remove Linkding support
+private const val DATABASE_VERSION_11 = 11 // Add nostrEventJson column
 
 @Database(
     entities = [
         PostDto::class, PostDtoFts::class,
         SavedFilterDto::class,
     ],
-    version = DATABASE_VERSION_10,
+    version = DATABASE_VERSION_11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

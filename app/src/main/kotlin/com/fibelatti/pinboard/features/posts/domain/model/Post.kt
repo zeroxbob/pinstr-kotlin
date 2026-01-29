@@ -22,6 +22,7 @@ data class Post(
     val faviconUrl: String? = null,
     val isArchived: Boolean? = null,
     val pendingSync: PendingSync? = null,
+    val nostrEventJson: String? = null,
 ) {
 
     val displayTitle: String

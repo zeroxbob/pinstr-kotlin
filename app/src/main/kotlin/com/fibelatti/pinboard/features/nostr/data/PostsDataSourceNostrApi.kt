@@ -79,7 +79,7 @@ class PostsDataSourceNostrApi @Inject constructor(
             Timber.d("NostrDataSource: Received ${publicEvents.size} public events")
 
             val publicPosts = publicEvents.mapNotNull { event ->
-                nostrEventMapper.toPost(event)
+                nostrEventMapper.toPost(event)?.copy(nostrEventJson = event.toJson())
             }
 
             // Fetch private bookmarks from vault pubkey if vault is unlocked
@@ -108,6 +108,7 @@ class PostsDataSourceNostrApi @Inject constructor(
                             AppConfig.PinboardApiLiterals.NO
                         },
                         tags = post.tags?.joinToString(AppConfig.PinboardApiLiterals.TAG_SEPARATOR) { it.name }.orEmpty(),
+                        nostrEventJson = post.nostrEventJson,
                     )
                 }
 
@@ -201,6 +202,7 @@ class PostsDataSourceNostrApi @Inject constructor(
                     readLater = false,
                     tags = decryptedContent.tags?.map { Tag(it) },
                     pendingSync = null,
+                    nostrEventJson = event.toJson(),
                 )
             } catch (e: Exception) {
                 Timber.e(e, "NostrDataSource: Failed to process private event")
@@ -253,8 +255,12 @@ class PostsDataSourceNostrApi @Inject constructor(
 
                     if (published) {
                         Timber.d("NostrDataSource: Event published successfully")
-                        // Save locally with the event ID
-                        val resultPost = post.copy(id = event.id, dateAdded = dateFormatter.nowAsDataFormat())
+                        // Save locally with the event ID and JSON
+                        val resultPost = post.copy(
+                            id = event.id,
+                            dateAdded = dateFormatter.nowAsDataFormat(),
+                            nostrEventJson = event.toJson(),
+                        )
                         saveLocally(resultPost)
                     } else {
                         Timber.w("NostrDataSource: Failed to publish to any relay, saving locally")
@@ -353,7 +359,11 @@ class PostsDataSourceNostrApi @Inject constructor(
 
         return if (published) {
             Timber.d("NostrDataSource: Private event published successfully")
-            val resultPost = post.copy(id = event.id, dateAdded = dateFormatter.nowAsDataFormat())
+            val resultPost = post.copy(
+                id = event.id,
+                dateAdded = dateFormatter.nowAsDataFormat(),
+                nostrEventJson = event.toJson(),
+            )
             saveLocally(resultPost)
         } else {
             Timber.w("NostrDataSource: Failed to publish private bookmark to any relay, saving locally")
@@ -379,6 +389,7 @@ class PostsDataSourceNostrApi @Inject constructor(
                 AppConfig.PinboardApiLiterals.NO
             },
             tags = post.tags?.joinToString(AppConfig.PinboardApiLiterals.TAG_SEPARATOR) { it.name }.orEmpty(),
+            nostrEventJson = post.nostrEventJson,
         )
         postsDao.savePosts(listOf(dto))
         postDtoMapper.map(dto)
