@@ -28,8 +28,25 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import timber.log.Timber
+import java.util.UUID
 import javax.inject.Inject
+
+/**
+ * Structure of encrypted bookmark content for private bookmarks.
+ * All fields are encrypted together as JSON to prevent metadata leakage.
+ */
+@Serializable
+private data class EncryptedBookmarkContent(
+    val url: String,
+    val title: String? = null,
+    val description: String? = null,
+    val tags: List<String>? = null,
+    val publishedAt: Long? = null,
+)
 
 /**
  * PostsRepository implementation that fetches and publishes bookmarks to Nostr relays.
@@ -108,6 +125,7 @@ class PostsDataSourceNostrApi @Inject constructor(
 
     /**
      * Fetches and decrypts private bookmarks from the vault identity.
+     * Private bookmarks have ALL data encrypted as JSON in the content field.
      */
     private suspend fun fetchPrivateBookmarks(): List<Post> {
         val vaultPubkey = vaultProvider.vaultPubkey
@@ -128,24 +146,60 @@ class PostsDataSourceNostrApi @Inject constructor(
 
         return events.mapNotNull { event ->
             try {
-                // Parse the event to get the post structure
-                val post = nostrEventMapper.toPost(event) ?: return@mapNotNull null
-
-                // Decrypt the content if it looks encrypted (has colon separator)
-                val decryptedDescription = if (post.description.contains(":") && post.description.matches(Regex("^[0-9a-f]+:[0-9a-f]+$"))) {
-                    try {
-                        VaultCrypto.decrypt(post.description, encryptionKey)
-                    } catch (e: Exception) {
-                        Timber.w(e, "NostrDataSource: Failed to decrypt private bookmark content")
-                        post.description // Keep encrypted if decryption fails
-                    }
-                } else {
-                    post.description
+                // Private bookmarks have encrypted JSON content
+                if (event.content.isBlank()) {
+                    Timber.d("NostrDataSource: Skipping event with empty content")
+                    return@mapNotNull null
                 }
 
-                post.copy(
-                    description = decryptedDescription,
+                // Decrypt the content
+                val decryptedJson = try {
+                    VaultCrypto.decrypt(event.content, encryptionKey)
+                } catch (e: Exception) {
+                    Timber.w(e, "NostrDataSource: Failed to decrypt private bookmark: ${event.id.take(8)}")
+                    return@mapNotNull null
+                }
+
+                // Parse the decrypted JSON
+                val decryptedContent = try {
+                    Json.decodeFromString<EncryptedBookmarkContent>(decryptedJson)
+                } catch (e: Exception) {
+                    Timber.w(e, "NostrDataSource: Failed to parse decrypted content: ${event.id.take(8)}")
+                    return@mapNotNull null
+                }
+
+                // Skip "deleted" bookmarks (empty URL)
+                if (decryptedContent.url.isBlank()) {
+                    Timber.d("NostrDataSource: Skipping deleted private bookmark")
+                    return@mapNotNull null
+                }
+
+                // Reconstruct full URL
+                val url = if (decryptedContent.url.startsWith("http://") || decryptedContent.url.startsWith("https://")) {
+                    decryptedContent.url
+                } else {
+                    "https://${decryptedContent.url}"
+                }
+
+                // Convert timestamp
+                val dateAdded = decryptedContent.publishedAt?.let {
+                    java.time.Instant.ofEpochSecond(it)
+                        .atOffset(java.time.ZoneOffset.UTC)
+                        .format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+                } ?: java.time.Instant.ofEpochSecond(event.createdAt)
+                    .atOffset(java.time.ZoneOffset.UTC)
+                    .format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+
+                Post(
+                    url = url,
+                    title = decryptedContent.title ?: url,
+                    description = decryptedContent.description ?: "",
+                    id = event.id,
+                    dateAdded = dateAdded,
                     private = true,
+                    readLater = false,
+                    tags = decryptedContent.tags?.map { Tag(it) },
+                    pendingSync = null,
                 )
             } catch (e: Exception) {
                 Timber.e(e, "NostrDataSource: Failed to process private event")
@@ -237,7 +291,8 @@ class PostsDataSourceNostrApi @Inject constructor(
      *
      * Private bookmarks are:
      * - Signed with the vault's signing key (different from user's main key)
-     * - Content is encrypted with AES-256-GCM using vault encryption key
+     * - ALL content is encrypted as JSON with AES-256-GCM (URL, title, description, tags)
+     * - Only a random d-tag is visible - no metadata leakage
      * - The vault pubkey is the author, so only the user can find/decrypt them
      */
     private suspend fun addPrivateBookmark(post: Post): Result<Post> {
@@ -253,18 +308,33 @@ class PostsDataSourceNostrApi @Inject constructor(
         val keyPair = KeyPair(signingKey)
         val vaultSigner = NostrSignerInternal(keyPair)
 
-        // Encrypt the content (description)
-        val encryptedContent = if (post.description.isNotBlank()) {
-            VaultCrypto.encrypt(post.description, encryptionKey)
+        // Ensure URL has a protocol
+        val fullUrl = if (post.url.startsWith("http://") || post.url.startsWith("https://")) {
+            post.url
         } else {
-            ""
+            "https://${post.url}"
         }
 
-        // Build event tags following NIP-B0 bookmark format
-        val tags = nostrEventMapper.toEventTags(post)
-        val tagsArray = tags.map { it.toTypedArray() }.toTypedArray()
+        // Create content object with ALL bookmark data to encrypt
+        val contentToEncrypt = EncryptedBookmarkContent(
+            url = fullUrl,
+            title = post.title.takeIf { it.isNotBlank() },
+            description = post.description.takeIf { it.isNotBlank() },
+            tags = post.tags?.map { it.name }?.takeIf { it.isNotEmpty() },
+            publishedAt = nostrEventMapper.parseTimestamp(post.dateAdded).takeIf { it > 0 },
+        )
 
-        Timber.d("NostrDataSource: Creating private bookmark event for URL: ${post.url}")
+        // Encrypt the entire JSON content
+        val jsonContent = Json.encodeToString(contentToEncrypt)
+        val encryptedContent = VaultCrypto.encrypt(jsonContent, encryptionKey)
+
+        // Generate random d-tag to prevent URL correlation
+        val randomIdentifier = UUID.randomUUID().toString()
+
+        // Only include random d-tag - no metadata leakage
+        val tagsArray = arrayOf(arrayOf("d", randomIdentifier))
+
+        Timber.d("NostrDataSource: Creating private bookmark event (d-tag: ${randomIdentifier.take(8)}...)")
 
         // Sign with vault identity
         val event: Event = vaultSigner.sign(
