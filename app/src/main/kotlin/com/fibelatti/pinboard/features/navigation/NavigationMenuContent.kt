@@ -4,15 +4,18 @@ package com.fibelatti.pinboard.features.navigation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
@@ -53,6 +56,7 @@ import com.fibelatti.pinboard.features.appstate.ViewPopular
 import com.fibelatti.pinboard.features.appstate.ViewPreferences
 import com.fibelatti.pinboard.features.appstate.ViewSavedFilters
 import com.fibelatti.pinboard.features.appstate.ViewTags
+import com.fibelatti.pinboard.features.nostr.vault.VaultState
 import com.fibelatti.ui.components.AutoSizeText
 import com.fibelatti.ui.preview.ThemePreviews
 import com.fibelatti.ui.theme.ExtendedTheme
@@ -60,8 +64,10 @@ import com.fibelatti.ui.theme.ExtendedTheme
 @Composable
 fun NavigationMenuContent(
     appMode: AppMode,
+    vaultState: VaultState,
     onNavOptionClicked: (Action) -> Unit,
     onExportClicked: () -> Unit,
+    onLockVaultClicked: () -> Unit,
     onSendFeedbackClicked: () -> Unit,
     onWriteReviewClicked: () -> Unit,
     onShareClicked: () -> Unit,
@@ -71,6 +77,7 @@ fun NavigationMenuContent(
 ) {
     NavigationMenuContent(
         appMode = appMode,
+        vaultState = vaultState,
         onAllClicked = { onNavOptionClicked(All) },
         onRecentClicked = { onNavOptionClicked(Recent) },
         onPublicClicked = { onNavOptionClicked(Public) },
@@ -84,6 +91,7 @@ fun NavigationMenuContent(
         onPreferencesClicked = { onNavOptionClicked(ViewPreferences) },
         onAccountsClicked = { onNavOptionClicked(ViewAccountSwitcher) },
         onExportClicked = onExportClicked,
+        onLockVaultClicked = onLockVaultClicked,
         onSendFeedbackClicked = onSendFeedbackClicked,
         onWriteReviewClicked = onWriteReviewClicked,
         onShareClicked = onShareClicked,
@@ -96,6 +104,7 @@ fun NavigationMenuContent(
 @Composable
 private fun NavigationMenuContent(
     appMode: AppMode,
+    vaultState: VaultState,
     onAllClicked: () -> Unit,
     onRecentClicked: () -> Unit,
     onPublicClicked: () -> Unit,
@@ -109,6 +118,7 @@ private fun NavigationMenuContent(
     onPreferencesClicked: () -> Unit,
     onAccountsClicked: () -> Unit,
     onExportClicked: () -> Unit,
+    onLockVaultClicked: () -> Unit,
     onSendFeedbackClicked: () -> Unit,
     onWriteReviewClicked: () -> Unit,
     onShareClicked: () -> Unit,
@@ -139,6 +149,15 @@ private fun NavigationMenuContent(
                 style = MaterialTheme.typography.headlineLarge,
             )
 
+            // Vault status indicator for Nostr
+            if (appMode == AppMode.NOSTR && vaultState != VaultState.NO_VAULT) {
+                Spacer(modifier = Modifier.height(8.dp))
+                VaultStatusIndicator(
+                    vaultState = vaultState,
+                    onLockClicked = onLockVaultClicked,
+                )
+            }
+
             Spacer(modifier = Modifier.height(30.dp))
         }
 
@@ -158,8 +177,8 @@ private fun NavigationMenuContent(
             iconRes = R.drawable.ic_bookmarks,
         )
 
-        // Nostr bookmarks are always public, so hide public/private filters
-        if (AppMode.NO_API != appMode && AppMode.NOSTR != appMode) {
+        // Show public/private filters for services that support it (including Nostr with vault)
+        if (AppMode.NO_API != appMode) {
             MenuItem(
                 textRes = R.string.menu_navigation_public,
                 onClick = onPublicClicked,
@@ -318,6 +337,74 @@ private fun AppVersionDetails(
 }
 
 @Composable
+private fun VaultStatusIndicator(
+    vaultState: VaultState,
+    onLockClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .background(
+                if (vaultState == VaultState.UNLOCKED) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                } else {
+                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                },
+            )
+            .clickable(
+                enabled = vaultState == VaultState.UNLOCKED,
+                onClick = onLockClicked,
+                role = Role.Button,
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(
+                id = if (vaultState == VaultState.UNLOCKED) {
+                    R.drawable.ic_lock_open
+                } else {
+                    R.drawable.ic_lock
+                },
+            ),
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = if (vaultState == VaultState.UNLOCKED) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            },
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(
+                id = if (vaultState == VaultState.UNLOCKED) {
+                    R.string.vault_status_unlocked
+                } else {
+                    R.string.vault_status_locked
+                },
+            ),
+            color = if (vaultState == VaultState.UNLOCKED) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            },
+            style = MaterialTheme.typography.labelMedium,
+        )
+        if (vaultState == VaultState.UNLOCKED) {
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = stringResource(id = R.string.vault_tap_to_lock),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
+    }
+}
+
+@Composable
 private fun MenuItem(
     @StringRes textRes: Int,
     onClick: () -> Unit,
@@ -362,6 +449,7 @@ private fun NavigationMenuContentPreview() {
     ExtendedTheme {
         NavigationMenuContent(
             appMode = AppMode.NOSTR,
+            vaultState = VaultState.UNLOCKED,
             onAllClicked = {},
             onRecentClicked = {},
             onPublicClicked = {},
@@ -375,6 +463,7 @@ private fun NavigationMenuContentPreview() {
             onPreferencesClicked = {},
             onAccountsClicked = {},
             onExportClicked = {},
+            onLockVaultClicked = {},
             onSendFeedbackClicked = {},
             onWriteReviewClicked = {},
             onShareClicked = {},

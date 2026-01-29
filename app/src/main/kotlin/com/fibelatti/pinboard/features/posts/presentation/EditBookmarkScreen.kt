@@ -67,6 +67,7 @@ import com.fibelatti.pinboard.features.appstate.EditPostContent
 import com.fibelatti.pinboard.features.appstate.NavigateBack
 import com.fibelatti.pinboard.features.main.MainState
 import com.fibelatti.pinboard.features.main.MainViewModel
+import com.fibelatti.pinboard.features.nostr.vault.VaultProvider
 import com.fibelatti.pinboard.features.posts.domain.model.PendingSync
 import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.tags.domain.TagManagerState
@@ -86,6 +87,7 @@ fun EditBookmarkScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
     editPostViewModel: EditPostViewModel = hiltViewModel(),
     postDetailViewModel: PostDetailViewModel = hiltViewModel(),
+    vaultProvider: VaultProvider = hiltViewModel<EditBookmarkVaultViewModel>().vaultProvider,
 ) {
     val appState by mainViewModel.appState.collectAsStateWithLifecycle()
     val postState by editPostViewModel.postState.collectAsStateWithLifecycle(initialValue = null)
@@ -102,6 +104,7 @@ fun EditBookmarkScreen(
         post = currentState,
         isNewBookmark = editPostScreenState.isNewBookmark,
         isLoading = editPostScreenState.isLoading || postDetailScreenState.isLoading,
+        isVaultUnlocked = vaultProvider.isUnlocked(),
         onUrlChanged = { newValue ->
             editPostViewModel.updatePost { post -> post.copy(url = newValue) }
         },
@@ -322,6 +325,7 @@ private fun EditBookmarkScreen(
     post: Post,
     isNewBookmark: Boolean,
     isLoading: Boolean,
+    isVaultUnlocked: Boolean,
     onUrlChanged: (String) -> Unit,
     urlError: String,
     onTitleChanged: (String) -> Unit,
@@ -348,6 +352,7 @@ private fun EditBookmarkScreen(
             appMode = appMode,
             post = post,
             isNewBookmark = isNewBookmark,
+            isVaultUnlocked = isVaultUnlocked,
             onUrlChanged = onUrlChanged,
             urlError = urlError,
             onTitleChanged = onTitleChanged,
@@ -388,6 +393,7 @@ private fun BookmarkContent(
     appMode: AppMode,
     post: Post,
     isNewBookmark: Boolean,
+    isVaultUnlocked: Boolean,
     onUrlChanged: (String) -> Unit,
     urlError: String,
     onTitleChanged: (String) -> Unit,
@@ -448,6 +454,7 @@ private fun BookmarkContent(
             onPrivateChanged = onPrivateChanged,
             readLater = post.readLater,
             onReadLaterChanged = onReadLaterChanged,
+            isVaultUnlocked = isVaultUnlocked,
         )
 
         TagManager(
@@ -598,6 +605,7 @@ private fun BookmarkFlags(
     onPrivateChanged: (Boolean) -> Unit,
     readLater: Boolean?,
     onReadLaterChanged: (Boolean) -> Unit,
+    isVaultUnlocked: Boolean = false,
 ) {
     Row(
         modifier = Modifier
@@ -605,15 +613,27 @@ private fun BookmarkFlags(
             .padding(start = 16.dp, top = 4.dp, end = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Nostr bookmarks are always public, so hide the private toggle
-        if (AppMode.NO_API != appMode && AppMode.NOSTR != appMode) {
-            SettingToggle(
-                title = stringResource(id = R.string.posts_add_private),
-                description = null,
-                checked = private == true,
-                onCheckedChange = onPrivateChanged,
-                modifier = Modifier.weight(0.5f),
-            )
+        // For Nostr, show encrypted toggle when vault is unlocked
+        // For other modes, show private toggle (except NO_API)
+        when {
+            appMode == AppMode.NOSTR && isVaultUnlocked -> {
+                SettingToggle(
+                    title = stringResource(id = R.string.posts_add_encrypted),
+                    description = stringResource(id = R.string.posts_add_encrypted_description),
+                    checked = private == true,
+                    onCheckedChange = onPrivateChanged,
+                    modifier = Modifier.weight(0.5f),
+                )
+            }
+            appMode != AppMode.NO_API && appMode != AppMode.NOSTR -> {
+                SettingToggle(
+                    title = stringResource(id = R.string.posts_add_private),
+                    description = null,
+                    checked = private == true,
+                    onCheckedChange = onPrivateChanged,
+                    modifier = Modifier.weight(0.5f),
+                )
+            }
         }
 
         SettingToggle(
@@ -639,6 +659,7 @@ private fun EditBookmarkScreenPreview(
             post = post.copy(description = post.description.take(200)),
             isNewBookmark = true,
             isLoading = false,
+            isVaultUnlocked = true,
             onUrlChanged = {},
             urlError = "",
             onTitleChanged = {},

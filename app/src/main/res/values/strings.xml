@@ -113,6 +113,10 @@
     <string name="vault_strength_good">Good</string>
     <string name="vault_strength_strong">Strong</string>
 
+    <string name="vault_status_unlocked">Vault Unlocked</string>
+    <string name="vault_status_locked">Vault Locked</string>
+    <string name="vault_tap_to_lock">Tap to lock</string>
+
     <!-- Posts -->
     <string name="posts_title_all">All Bookmarks</string>
     <string name="posts_title_recent">Recent Bookmarks</string>
@@ -151,6 +155,8 @@
     <string name="posts_add_url_notes">Notes</string>
     <string name="posts_add_private">Private</string>
     <string name="posts_add_read_later">Read later</string>
+    <string name="posts_add_encrypted">Encrypted</string>
+    <string name="posts_add_encrypted_description">Only you can read this bookmark</string>
 
     <string name="posts_add_non_editable_url">To edit the URL, visit Pinstr web app at pinstr.co.</string>
 
