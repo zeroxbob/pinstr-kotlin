@@ -48,6 +48,19 @@ class SecureStorage @Inject constructor(
             }
         }
 
+    var vaultPassphrase: String?
+        get() = encryptedPrefs?.getString(KEY_VAULT_PASSPHRASE, null)
+        set(value) {
+            encryptedPrefs?.edit()?.apply {
+                if (value != null) {
+                    putString(KEY_VAULT_PASSPHRASE, value)
+                } else {
+                    remove(KEY_VAULT_PASSPHRASE)
+                }
+                apply()
+            }
+        }
+
     fun clear() {
         encryptedPrefs?.edit()?.clear()?.apply()
     }
@@ -55,5 +68,6 @@ class SecureStorage @Inject constructor(
     companion object {
         private const val ENCRYPTED_PREFS_FILE = "secure_prefs"
         private const val KEY_NOSTR_NSEC = "nostr_nsec"
+        private const val KEY_VAULT_PASSPHRASE = "vault_passphrase"
     }
 }

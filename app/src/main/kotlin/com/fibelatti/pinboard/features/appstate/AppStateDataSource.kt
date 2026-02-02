@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -90,8 +91,23 @@ class AppStateDataSource @Inject constructor(
                                         VaultSetupContent()
                                     }
                                     VaultState.LOCKED -> {
-                                        Timber.d("Nostr login: Vault locked, navigating to unlock")
-                                        VaultUnlockContent()
+                                        // Try auto-unlock with stored passphrase
+                                        val storedPassphrase = vaultProvider.getStoredPassphrase()
+                                        val userPubkey = userRepository.nostrPubkey
+                                        if (storedPassphrase != null && userPubkey != null) {
+                                            Timber.d("Nostr login: Attempting auto-unlock")
+                                            val result = vaultProvider.unlockVault(storedPassphrase, userPubkey)
+                                            if (result.isSuccess) {
+                                                Timber.d("Nostr login: Auto-unlock successful, proceeding to posts")
+                                                getInitialPostListContent()
+                                            } else {
+                                                Timber.d("Nostr login: Auto-unlock failed, navigating to unlock")
+                                                VaultUnlockContent()
+                                            }
+                                        } else {
+                                            Timber.d("Nostr login: Vault locked, navigating to unlock")
+                                            VaultUnlockContent()
+                                        }
                                     }
                                     VaultState.UNLOCKED -> {
                                         Timber.d("Nostr login: Vault unlocked, proceeding to posts")
@@ -189,8 +205,23 @@ class AppStateDataSource @Inject constructor(
                         VaultSetupContent()
                     }
                     VaultState.LOCKED -> {
-                        Timber.d("Initial content: Vault locked, showing unlock")
-                        VaultUnlockContent()
+                        // Try auto-unlock with stored passphrase
+                        val storedPassphrase = vaultProvider.getStoredPassphrase()
+                        val userPubkey = userRepository.nostrPubkey
+                        if (storedPassphrase != null && userPubkey != null) {
+                            Timber.d("Initial content: Attempting auto-unlock")
+                            val result = runBlocking { vaultProvider.unlockVault(storedPassphrase, userPubkey) }
+                            if (result.isSuccess) {
+                                Timber.d("Initial content: Auto-unlock successful, showing posts")
+                                getInitialPostListContent()
+                            } else {
+                                Timber.d("Initial content: Auto-unlock failed, showing unlock screen")
+                                VaultUnlockContent()
+                            }
+                        } else {
+                            Timber.d("Initial content: Vault locked, showing unlock")
+                            VaultUnlockContent()
+                        }
                     }
                     VaultState.UNLOCKED -> {
                         Timber.d("Initial content: Vault unlocked, showing posts")

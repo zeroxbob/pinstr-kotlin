@@ -1,5 +1,6 @@
 package com.fibelatti.pinboard.features.nostr.vault
 
+import com.fibelatti.pinboard.core.persistence.SecureStorage
 import com.fibelatti.pinboard.core.persistence.UserSharedPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ enum class VaultState {
 @Singleton
 class VaultProvider @Inject constructor(
     private val userSharedPreferences: UserSharedPreferences,
+    private val secureStorage: SecureStorage,
 ) {
     /**
      * In-memory vault keys (cleared when locked/logout).
@@ -40,6 +42,11 @@ class VaultProvider @Inject constructor(
 
     private val _vaultState = MutableStateFlow(computeInitialState())
     val vaultState: StateFlow<VaultState> = _vaultState.asStateFlow()
+
+    /**
+     * Returns the stored passphrase if available (for auto-unlock).
+     */
+    fun getStoredPassphrase(): String? = secureStorage.vaultPassphrase
 
     /**
      * The vault's public key (hex format) for querying private bookmarks.
@@ -89,6 +96,9 @@ class VaultProvider @Inject constructor(
             vaultKeys = keys
             _vaultState.value = VaultState.UNLOCKED
 
+            // Store passphrase for auto-unlock
+            secureStorage.vaultPassphrase = passphrase
+
             Timber.d("Vault created successfully, vault pubkey: ${derivedVaultPubkey.take(8)}...")
             Result.success(Unit)
         } catch (e: Exception) {
@@ -129,6 +139,9 @@ class VaultProvider @Inject constructor(
             vaultKeys = keys
             _vaultState.value = VaultState.UNLOCKED
 
+            // Store passphrase for auto-unlock
+            secureStorage.vaultPassphrase = passphrase
+
             Timber.d("Vault unlocked successfully")
             Result.success(Unit)
         } catch (e: InvalidPassphraseException) {
@@ -140,12 +153,13 @@ class VaultProvider @Inject constructor(
     }
 
     /**
-     * Locks the vault (clears keys from memory, keeps metadata).
+     * Locks the vault (clears keys from memory and stored passphrase).
      */
     fun lockVault() {
         Timber.d("Locking vault")
         vaultKeys?.let { VaultCrypto.clearKeys(it) }
         vaultKeys = null
+        secureStorage.vaultPassphrase = null
         _vaultState.value = if (hasVault()) VaultState.LOCKED else VaultState.NO_VAULT
     }
 
@@ -160,13 +174,14 @@ class VaultProvider @Inject constructor(
     fun getSigningKey(): ByteArray? = vaultKeys?.signingKey
 
     /**
-     * Clears all vault data (keys + metadata).
+     * Clears all vault data (keys + metadata + stored passphrase).
      * Call this on logout.
      */
     fun clearVault() {
         Timber.d("Clearing vault")
         vaultKeys?.let { VaultCrypto.clearKeys(it) }
         vaultKeys = null
+        secureStorage.vaultPassphrase = null
         userSharedPreferences.vaultCreatedAt = null
         userSharedPreferences.vaultPubkey = null
         _vaultState.value = VaultState.NO_VAULT
