@@ -65,10 +65,7 @@ fun NavigationMenuContent(
     appMode: AppMode,
     vaultState: VaultState,
     onNavOptionClicked: (Action) -> Unit,
-    onExportClicked: () -> Unit,
     onLockVaultClicked: () -> Unit,
-    onSendFeedbackClicked: () -> Unit,
-    onWriteReviewClicked: () -> Unit,
     onShareClicked: () -> Unit,
     onPrivacyPolicyClicked: () -> Unit,
     onLicensesClicked: () -> Unit,
@@ -88,10 +85,7 @@ fun NavigationMenuContent(
         onPopularClicked = { onNavOptionClicked(ViewPopular) },
         onPreferencesClicked = { onNavOptionClicked(ViewPreferences) },
         onAccountsClicked = { onNavOptionClicked(ViewAccountSwitcher) },
-        onExportClicked = onExportClicked,
         onLockVaultClicked = onLockVaultClicked,
-        onSendFeedbackClicked = onSendFeedbackClicked,
-        onWriteReviewClicked = onWriteReviewClicked,
         onShareClicked = onShareClicked,
         onPrivacyPolicyClicked = onPrivacyPolicyClicked,
         onLicensesClicked = onLicensesClicked,
@@ -114,10 +108,7 @@ private fun NavigationMenuContent(
     onPopularClicked: () -> Unit,
     onPreferencesClicked: () -> Unit,
     onAccountsClicked: () -> Unit,
-    onExportClicked: () -> Unit,
     onLockVaultClicked: () -> Unit,
-    onSendFeedbackClicked: () -> Unit,
-    onWriteReviewClicked: () -> Unit,
     onShareClicked: () -> Unit,
     onPrivacyPolicyClicked: () -> Unit,
     onLicensesClicked: () -> Unit,
@@ -239,38 +230,16 @@ private fun NavigationMenuContent(
             iconRes = R.drawable.ic_person,
         )
 
-        MenuItem(
-            textRes = R.string.menu_navigation_export,
-            onClick = onExportClicked,
-            iconRes = R.drawable.ic_backup,
-            shape = MaterialTheme.shapes.medium.copy(
-                topStart = CornerSize(2.dp),
-                topEnd = CornerSize(2.dp),
-            ),
-        )
-
         Spacer(modifier = Modifier.height(30.dp))
-
-        MenuItem(
-            textRes = R.string.about_send_feedback,
-            onClick = onSendFeedbackClicked,
-            iconRes = R.drawable.ic_feedback,
-            shape = MaterialTheme.shapes.medium.copy(
-                bottomStart = CornerSize(2.dp),
-                bottomEnd = CornerSize(2.dp),
-            ),
-        )
-
-        MenuItem(
-            textRes = R.string.about_rate,
-            onClick = onWriteReviewClicked,
-            iconRes = R.drawable.ic_rate,
-        )
 
         MenuItem(
             textRes = R.string.about_share,
             onClick = onShareClicked,
             iconRes = R.drawable.ic_share,
+            shape = MaterialTheme.shapes.medium.copy(
+                bottomStart = CornerSize(2.dp),
+                bottomEnd = CornerSize(2.dp),
+            ),
         )
 
         MenuItem(
@@ -456,10 +425,7 @@ private fun NavigationMenuContentPreview() {
             onPopularClicked = {},
             onPreferencesClicked = {},
             onAccountsClicked = {},
-            onExportClicked = {},
             onLockVaultClicked = {},
-            onSendFeedbackClicked = {},
-            onWriteReviewClicked = {},
             onShareClicked = {},
             onPrivacyPolicyClicked = {},
             onLicensesClicked = {},

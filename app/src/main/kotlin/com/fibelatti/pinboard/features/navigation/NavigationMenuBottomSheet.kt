@@ -94,17 +94,8 @@ fun NavigationMenuBottomSheet(
                 mainViewModel.runAction(action)
                 sheetState.hideBottomSheet()
             },
-            onExportClicked = navigationMenuViewModel::createBackup,
             onLockVaultClicked = {
                 navigationMenuViewModel.lockVault()
-                sheetState.hideBottomSheet()
-            },
-            onSendFeedbackClicked = {
-                localActivity?.showFeedbackPrompt()
-                sheetState.hideBottomSheet()
-            },
-            onWriteReviewClicked = {
-                localUriHandler.openUri(NavigationMenu.APP_URL)
                 sheetState.hideBottomSheet()
             },
             onShareClicked = {
