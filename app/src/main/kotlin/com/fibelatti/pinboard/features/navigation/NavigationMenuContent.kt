@@ -48,7 +48,6 @@ import com.fibelatti.pinboard.features.appstate.All
 import com.fibelatti.pinboard.features.appstate.Private
 import com.fibelatti.pinboard.features.appstate.Public
 import com.fibelatti.pinboard.features.appstate.Recent
-import com.fibelatti.pinboard.features.appstate.Unread
 import com.fibelatti.pinboard.features.appstate.Untagged
 import com.fibelatti.pinboard.features.appstate.ViewAccountSwitcher
 import com.fibelatti.pinboard.features.appstate.ViewNotes
@@ -82,7 +81,6 @@ fun NavigationMenuContent(
         onRecentClicked = { onNavOptionClicked(Recent) },
         onPublicClicked = { onNavOptionClicked(Public) },
         onPrivateClicked = { onNavOptionClicked(Private) },
-        onReadLaterClicked = { onNavOptionClicked(Unread) },
         onUntaggedClicked = { onNavOptionClicked(Untagged) },
         onSavedFiltersClicked = { onNavOptionClicked(ViewSavedFilters) },
         onTagsClicked = { onNavOptionClicked(ViewTags) },
@@ -109,7 +107,6 @@ private fun NavigationMenuContent(
     onRecentClicked: () -> Unit,
     onPublicClicked: () -> Unit,
     onPrivateClicked: () -> Unit,
-    onReadLaterClicked: () -> Unit,
     onUntaggedClicked: () -> Unit,
     onSavedFiltersClicked: () -> Unit,
     onTagsClicked: () -> Unit,
@@ -191,12 +188,6 @@ private fun NavigationMenuContent(
                 iconRes = R.drawable.ic_bookmarks,
             )
         }
-
-        MenuItem(
-            textRes = R.string.menu_navigation_unread,
-            onClick = onReadLaterClicked,
-            iconRes = R.drawable.ic_bookmarks,
-        )
 
         MenuItem(
             textRes = R.string.menu_navigation_untagged,
@@ -458,7 +449,6 @@ private fun NavigationMenuContentPreview() {
             onRecentClicked = {},
             onPublicClicked = {},
             onPrivateClicked = {},
-            onReadLaterClicked = {},
             onUntaggedClicked = {},
             onSavedFiltersClicked = {},
             onTagsClicked = {},
