@@ -1,6 +1,5 @@
 package com.fibelatti.pinboard.features.posts.presentation
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,9 +13,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,8 +52,16 @@ private fun BookmarkJsonContent(
     title: String,
     json: String?,
 ) {
-    val prettyJson = remember(json) {
-        json?.let { prettyPrintJson(it) }
+    val keyColor = MaterialTheme.colorScheme.primary
+    val stringColor = MaterialTheme.colorScheme.tertiary
+    val numberColor = MaterialTheme.colorScheme.secondary
+    val booleanColor = MaterialTheme.colorScheme.error
+    val defaultColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val highlightedJson = remember(json, keyColor, stringColor, numberColor, booleanColor, defaultColor) {
+        json?.let { prettyPrintJson(it) }?.let { prettyJson ->
+            highlightJson(prettyJson, keyColor, stringColor, numberColor, booleanColor, defaultColor)
+        }
     }
 
     Column(
@@ -81,11 +92,8 @@ private fun BookmarkJsonContent(
 
         SelectionContainer {
             Text(
-                text = prettyJson ?: stringResource(R.string.posts_json_not_available),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = highlightedJson ?: AnnotatedString(stringResource(R.string.posts_json_not_available)),
+                modifier = Modifier.fillMaxWidth(),
                 fontFamily = FontFamily.Monospace,
                 fontSize = 12.sp,
                 lineHeight = 18.sp,
@@ -102,5 +110,47 @@ private fun prettyPrintJson(json: String): String {
         prettyJson.encodeToString(JsonElement.serializer(), jsonElement)
     } catch (e: Exception) {
         json
+    }
+}
+
+private fun highlightJson(
+    json: String,
+    keyColor: Color,
+    stringColor: Color,
+    numberColor: Color,
+    booleanColor: Color,
+    defaultColor: Color,
+): AnnotatedString = buildAnnotatedString {
+    // Regex patterns for JSON tokens
+    val keyPattern = """"[^"]*"\s*:""".toRegex()
+    val stringPattern = """:\s*"[^"]*"""".toRegex()
+    val numberPattern = """:\s*-?\d+\.?\d*""".toRegex()
+    val booleanNullPattern = """\b(true|false|null)\b""".toRegex()
+
+    // Default style
+    append(json)
+    addStyle(SpanStyle(color = defaultColor), 0, json.length)
+
+    // Highlight keys (property names)
+    keyPattern.findAll(json).forEach { match ->
+        val quoteEnd = match.value.lastIndexOf('"')
+        addStyle(SpanStyle(color = keyColor), match.range.first, match.range.first + quoteEnd + 1)
+    }
+
+    // Highlight string values
+    stringPattern.findAll(json).forEach { match ->
+        val quoteStart = match.value.indexOf('"')
+        addStyle(SpanStyle(color = stringColor), match.range.first + quoteStart, match.range.last + 1)
+    }
+
+    // Highlight numbers
+    numberPattern.findAll(json).forEach { match ->
+        val colonEnd = match.value.indexOfFirst { it.isDigit() || it == '-' }
+        addStyle(SpanStyle(color = numberColor), match.range.first + colonEnd, match.range.last + 1)
+    }
+
+    // Highlight booleans and null
+    booleanNullPattern.findAll(json).forEach { match ->
+        addStyle(SpanStyle(color = booleanColor), match.range.first, match.range.last + 1)
     }
 }
