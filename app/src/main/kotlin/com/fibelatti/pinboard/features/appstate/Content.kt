@@ -153,6 +153,10 @@ data class UserPreferencesContent(
     override val previousContent: PostListContent,
 ) : ContentWithHistory()
 
+data class RelaysContent(
+    override val previousContent: PostListContent,
+) : ContentWithHistory()
+
 /**
  * Used when sharing URLs to the app. It usually indicates that the app should be finished so that
  * the user can return to the origin of the deeplink.

@@ -53,6 +53,7 @@ import com.fibelatti.pinboard.features.appstate.ViewAccountSwitcher
 import com.fibelatti.pinboard.features.appstate.ViewNotes
 import com.fibelatti.pinboard.features.appstate.ViewPopular
 import com.fibelatti.pinboard.features.appstate.ViewPreferences
+import com.fibelatti.pinboard.features.appstate.ViewRelays
 import com.fibelatti.pinboard.features.appstate.ViewSavedFilters
 import com.fibelatti.pinboard.features.appstate.ViewTags
 import com.fibelatti.pinboard.features.nostr.vault.VaultState
@@ -84,6 +85,7 @@ fun NavigationMenuContent(
         onNotesClicked = { onNavOptionClicked(ViewNotes) },
         onPopularClicked = { onNavOptionClicked(ViewPopular) },
         onPreferencesClicked = { onNavOptionClicked(ViewPreferences) },
+        onRelaysClicked = { onNavOptionClicked(ViewRelays) },
         onAccountsClicked = { onNavOptionClicked(ViewAccountSwitcher) },
         onLockVaultClicked = onLockVaultClicked,
         onShareClicked = onShareClicked,
@@ -107,6 +109,7 @@ private fun NavigationMenuContent(
     onNotesClicked: () -> Unit,
     onPopularClicked: () -> Unit,
     onPreferencesClicked: () -> Unit,
+    onRelaysClicked: () -> Unit,
     onAccountsClicked: () -> Unit,
     onLockVaultClicked: () -> Unit,
     onShareClicked: () -> Unit,
@@ -224,10 +227,23 @@ private fun NavigationMenuContent(
             ),
         )
 
+        // Relays menu item (only for Nostr)
+        if (appMode == AppMode.NOSTR) {
+            MenuItem(
+                textRes = R.string.menu_navigation_relays,
+                onClick = onRelaysClicked,
+                iconRes = R.drawable.ic_sync,
+            )
+        }
+
         MenuItem(
             textRes = R.string.menu_navigation_accounts,
             onClick = onAccountsClicked,
             iconRes = R.drawable.ic_person,
+            shape = MaterialTheme.shapes.medium.copy(
+                topStart = CornerSize(2.dp),
+                topEnd = CornerSize(2.dp),
+            ),
         )
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -424,6 +440,7 @@ private fun NavigationMenuContentPreview() {
             onNotesClicked = {},
             onPopularClicked = {},
             onPreferencesClicked = {},
+            onRelaysClicked = {},
             onAccountsClicked = {},
             onLockVaultClicked = {},
             onShareClicked = {},

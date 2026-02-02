@@ -42,6 +42,7 @@ class NavigationActionHandler @Inject constructor(
             is ViewAccountSwitcher -> viewAccountSwitcher(currentContent)
             is AddAccount -> addAccount(action, currentContent)
             is ViewPreferences -> viewPreferences(currentContent)
+            is ViewRelays -> viewRelays(currentContent)
         }
     }
 
@@ -295,6 +296,18 @@ class NavigationActionHandler @Inject constructor(
         val body = { postListContent: PostListContent ->
             UserPreferencesContent(
                 userPreferences = userRepository.currentPreferences.value,
+                previousContent = postListContent,
+            )
+        }
+
+        return currentContent
+            .reduce(body)
+            .reduce<PostDetailContent> { postDetailContent -> body(postDetailContent.previousContent) }
+    }
+
+    private fun viewRelays(currentContent: Content): Content {
+        val body = { postListContent: PostListContent ->
+            RelaysContent(
                 previousContent = postListContent,
             )
         }

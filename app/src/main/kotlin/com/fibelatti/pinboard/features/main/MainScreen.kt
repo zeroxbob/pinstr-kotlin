@@ -86,6 +86,7 @@ import com.fibelatti.pinboard.features.appstate.PopularPostsContent
 import com.fibelatti.pinboard.features.appstate.PostDetailContent
 import com.fibelatti.pinboard.features.appstate.PostListContent
 import com.fibelatti.pinboard.features.appstate.Refresh
+import com.fibelatti.pinboard.features.appstate.RelaysContent
 import com.fibelatti.pinboard.features.appstate.RefreshPopular
 import com.fibelatti.pinboard.features.appstate.SavedFiltersContent
 import com.fibelatti.pinboard.features.appstate.SearchContent
@@ -104,6 +105,7 @@ import com.fibelatti.pinboard.features.posts.presentation.EditBookmarkScreen
 import com.fibelatti.pinboard.features.posts.presentation.PopularBookmarksScreen
 import com.fibelatti.pinboard.features.posts.presentation.SearchBookmarksScreen
 import com.fibelatti.pinboard.features.tags.presentation.TagListScreen
+import com.fibelatti.pinboard.features.nostr.presentation.RelaysScreen
 import com.fibelatti.pinboard.features.nostr.vault.VaultSetupScreen
 import com.fibelatti.pinboard.features.nostr.vault.VaultUnlockScreen
 import com.fibelatti.pinboard.features.user.presentation.AccountSwitcherScreen
@@ -354,6 +356,7 @@ private fun MainPanelContent(
             PopularPostDetailContent::class -> BookmarkDetailsScreen()
             AccountSwitcherContent::class -> AccountSwitcherScreen()
             UserPreferencesContent::class -> UserPreferencesScreen()
+            RelaysContent::class -> RelaysScreen()
         }
     }
 }

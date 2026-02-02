@@ -64,6 +64,7 @@ data object ViewPopular : NavigationAction()
 data object ViewAccountSwitcher : NavigationAction()
 data class AddAccount(val appMode: AppMode) : NavigationAction()
 data object ViewPreferences : NavigationAction()
+data object ViewRelays : NavigationAction()
 
 // region ViewCategory
 data object All : ViewCategory()

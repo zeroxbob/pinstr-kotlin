@@ -10,6 +10,7 @@ import com.fibelatti.pinboard.core.functional.resultFrom
 import com.fibelatti.pinboard.core.network.InvalidRequestException
 import com.fibelatti.pinboard.core.util.DateFormatter
 import com.fibelatti.pinboard.features.appstate.SortType
+import com.fibelatti.pinboard.features.nostr.domain.RelayProvider
 import com.fibelatti.pinboard.features.nostr.signer.NostrSignerProvider
 import com.fibelatti.pinboard.features.nostr.signer.SignerType
 import com.fibelatti.pinboard.features.nostr.vault.VaultCrypto
@@ -62,6 +63,7 @@ class PostsDataSourceNostrApi @Inject constructor(
     private val userRepository: UserRepository,
     private val nostrSignerProvider: NostrSignerProvider,
     private val vaultProvider: VaultProvider,
+    private val relayProvider: RelayProvider,
 ) : PostsRepository {
 
     override suspend fun update(): Result<String> {
@@ -75,7 +77,8 @@ class PostsDataSourceNostrApi @Inject constructor(
 
             // Fetch public bookmarks from user's pubkey
             val publicFilter = NostrFilter.bookmarksForAuthor(pubkey, limit = 500)
-            val publicEvents = nostrClient.fetchAllEvents(publicFilter)
+            val relays = relayProvider.getRelays()
+            val publicEvents = nostrClient.fetchAllEvents(publicFilter, relays)
             Timber.d("NostrDataSource: Received ${publicEvents.size} public events")
 
             val publicPosts = publicEvents.mapNotNull { event ->
@@ -142,7 +145,8 @@ class PostsDataSourceNostrApi @Inject constructor(
         Timber.d("NostrDataSource: Fetching private bookmarks for vault pubkey: ${vaultPubkey.take(8)}...")
 
         val filter = NostrFilter.privateBookmarksForAuthor(vaultPubkey, limit = 500)
-        val events = nostrClient.fetchAllEvents(filter)
+        val relays = relayProvider.getRelays()
+        val events = nostrClient.fetchAllEvents(filter, relays)
 
         Timber.d("NostrDataSource: Received ${events.size} private events")
 
@@ -251,7 +255,7 @@ class PostsDataSourceNostrApi @Inject constructor(
                     Timber.d("NostrDataSource: Signed event id=${event.id.take(8)}...")
 
                     // Publish to relays
-                    val published = nostrClient.publishEvent(event)
+                    val published = nostrClient.publishEvent(event, relayProvider.getRelays())
 
                     if (published) {
                         Timber.d("NostrDataSource: Event published successfully")
@@ -355,7 +359,7 @@ class PostsDataSourceNostrApi @Inject constructor(
         Timber.d("NostrDataSource: Signed private event id=${event.id.take(8)}... with vault pubkey")
 
         // Publish to relays
-        val published = nostrClient.publishEvent(event)
+        val published = nostrClient.publishEvent(event, relayProvider.getRelays())
 
         return if (published) {
             Timber.d("NostrDataSource: Private event published successfully")

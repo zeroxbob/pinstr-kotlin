@@ -13,6 +13,7 @@ import com.fibelatti.pinboard.features.appstate.PostDetailContent
 import com.fibelatti.pinboard.features.appstate.PostListContent
 import com.fibelatti.pinboard.features.appstate.SavedFiltersContent
 import com.fibelatti.pinboard.features.appstate.SearchContent
+import com.fibelatti.pinboard.features.appstate.RelaysContent
 import com.fibelatti.pinboard.features.appstate.TagListContent
 import com.fibelatti.pinboard.features.appstate.UserPreferencesContent
 import com.fibelatti.pinboard.features.main.reducer.AccountSwitcherReducer
@@ -24,6 +25,7 @@ import com.fibelatti.pinboard.features.main.reducer.MainStateReducer
 import com.fibelatti.pinboard.features.main.reducer.NoteDetailsReducer
 import com.fibelatti.pinboard.features.main.reducer.NoteListReducer
 import com.fibelatti.pinboard.features.main.reducer.PopularBookmarksReducer
+import com.fibelatti.pinboard.features.main.reducer.RelaysReducer
 import com.fibelatti.pinboard.features.main.reducer.SavedFiltersReducer
 import com.fibelatti.pinboard.features.main.reducer.SearchReducer
 import com.fibelatti.pinboard.features.main.reducer.TagListReducer
@@ -107,4 +109,9 @@ abstract class MainModule {
     @IntoMap
     @MainReducerKey(UserPreferencesContent::class)
     abstract fun userPreferencesReducer(impl: UserPreferencesReducer): MainStateReducer
+
+    @Binds
+    @IntoMap
+    @MainReducerKey(RelaysContent::class)
+    abstract fun relaysReducer(impl: RelaysReducer): MainStateReducer
 }

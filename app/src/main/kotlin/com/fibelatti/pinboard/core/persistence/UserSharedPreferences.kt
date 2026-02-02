@@ -243,4 +243,13 @@ class UserSharedPreferences @Inject constructor(private val sharedPreferences: S
     var alphabetizeTags: Boolean
         get() = sharedPreferences.get(KEY_ALPHABETIZE_TAGS, true)
         set(value) = sharedPreferences.put(KEY_ALPHABETIZE_TAGS, value)
+
+    /**
+     * Custom relay configuration stored as JSON.
+     * Format: [{"url":"wss://...", "read":true, "write":true}, ...]
+     * Null means use default relays.
+     */
+    var customRelays: String?
+        get() = sharedPreferences.getString("CUSTOM_RELAYS", null)
+        set(value) = sharedPreferences.edit { putString("CUSTOM_RELAYS", value) }
 }

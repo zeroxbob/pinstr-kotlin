@@ -117,6 +117,24 @@
     <string name="vault_status_locked">Vault Locked</string>
     <string name="vault_tap_to_lock">Tap to lock</string>
 
+    <!-- Relays -->
+    <string name="relays_title">Relays</string>
+    <string name="relays_description">Relays are servers that store and forward your Nostr events. Add or remove relays to control where your bookmarks are stored.</string>
+    <string name="relays_add_title">Add Relay</string>
+    <string name="relays_add_hint">wss://relay.example.com</string>
+    <string name="relays_add_button">Add</string>
+    <string name="relays_read">Read</string>
+    <string name="relays_write">Write</string>
+    <string name="relays_remove">Remove</string>
+    <string name="relays_reset_defaults">Reset to Defaults</string>
+    <string name="relays_reset_confirm">Reset to default relays? Your custom relays will be removed.</string>
+    <string name="relays_empty">No relays configured. Add at least one relay to sync bookmarks.</string>
+    <string name="relays_error_invalid_url">Invalid relay URL. Must start with wss:// or ws://</string>
+    <string name="relays_error_duplicate">This relay is already in the list.</string>
+    <string name="relays_added_feedback">Relay added</string>
+    <string name="relays_removed_feedback">Relay removed</string>
+    <string name="menu_navigation_relays">Relays</string>
+
     <!-- Posts -->
     <string name="posts_title_all">All Bookmarks</string>
     <string name="posts_title_recent">Recent Bookmarks</string>
