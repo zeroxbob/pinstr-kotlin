@@ -73,6 +73,16 @@ sealed class PostQuickActions(
         override val serializedName: String = "OPEN_BROWSER"
     }
 
+    data class ShowJson(
+        override val post: Post,
+    ) : PostQuickActions(
+        title = R.string.quick_actions_show_json,
+        icon = R.drawable.ic_code,
+    ) {
+
+        override val serializedName: String = "SHOW_JSON"
+    }
+
     companion object {
 
         fun allOptions(
@@ -89,6 +99,10 @@ sealed class PostQuickActions(
             add(Share(post))
 
             add(OpenBrowser(post))
+
+            if (post.nostrEventJson != null) {
+                add(ShowJson(post))
+            }
         }
     }
 }

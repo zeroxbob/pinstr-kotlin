@@ -237,7 +237,6 @@ fun BookmarkListScreen(
             onTagClicked = { post -> mainViewModel.runAction(PostsForTag(post)) },
             onPrivateClicked = { mainViewModel.runAction(Private) },
             onReadLaterClicked = { mainViewModel.runAction(Unread) },
-            onCodeClicked = { post -> bookmarkJsonSheetState.showBottomSheet(post) },
             showPostDescription = postListContent.showDescription,
             sidePanelVisible = appState.sidePanelVisible,
             listState = listState,
@@ -256,6 +255,9 @@ fun BookmarkListScreen(
             },
             onExpandDescription = { post ->
                 bookmarkDescriptionSheetState.showBottomSheet(data = post)
+            },
+            onShowJson = { post ->
+                bookmarkJsonSheetState.showBottomSheet(data = post)
             },
         )
 
@@ -388,7 +390,6 @@ fun BookmarkListScreen(
     onTagClicked: (Tag) -> Unit,
     onPrivateClicked: () -> Unit,
     onReadLaterClicked: () -> Unit,
-    onCodeClicked: (Post) -> Unit,
     showPostDescription: Boolean,
     sidePanelVisible: Boolean,
     modifier: Modifier = Modifier,
@@ -471,7 +472,6 @@ fun BookmarkListScreen(
                         onTagClicked = onTagClicked,
                         onPrivateClicked = onPrivateClicked,
                         onReadLaterClicked = onReadLaterClicked,
-                        onCodeClicked = { onCodeClicked(post) },
                     )
                 }
             }
@@ -565,7 +565,6 @@ private fun BookmarkItem(
     onTagClicked: (Tag) -> Unit,
     onPrivateClicked: () -> Unit,
     onReadLaterClicked: () -> Unit,
-    onCodeClicked: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -679,13 +678,11 @@ private fun BookmarkItem(
             },
             private = post.private,
             readLater = post.readLater,
-            showCodeIcon = post.nostrEventJson != null,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(y = (-12).dp, x = (-12).dp),
             onPrivateClicked = onPrivateClicked,
             onReadLaterClicked = onReadLaterClicked,
-            onCodeClicked = onCodeClicked,
         )
     }
 }
@@ -720,40 +717,15 @@ private fun BookmarkFlags(
     time: String,
     private: Boolean?,
     readLater: Boolean?,
-    showCodeIcon: Boolean = false,
     modifier: Modifier = Modifier,
     onPrivateClicked: () -> Unit = {},
     onReadLaterClicked: () -> Unit = {},
-    onCodeClicked: () -> Unit = {},
 ) {
     Row(
         modifier = modifier.height(IntrinsicSize.Max),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (showCodeIcon) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .shadow(elevation = 2.dp, shape = MaterialTheme.shapes.medium)
-                    .background(
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                    )
-                    .clickable(onClick = onCodeClicked)
-                    .padding(all = 8.dp)
-                    .testTag("code-flag"),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_code),
-                    contentDescription = stringResource(R.string.posts_view_json),
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-
         if (private == true) {
             Box(
                 modifier = Modifier
@@ -827,6 +799,7 @@ private fun BookmarkQuickActionsBottomSheet(
     onEdit: (Post) -> Unit,
     onDelete: (Post) -> Unit,
     onExpandDescription: (Post) -> Unit,
+    onShowJson: (Post) -> Unit,
 ) {
     val post: Post = sheetState.bottomSheetData() ?: return
     val localContext = LocalContext.current
@@ -871,6 +844,10 @@ private fun BookmarkQuickActionsBottomSheet(
 
                 is PostQuickActions.OpenBrowser -> {
                     localUriHandler.openUri(post.url)
+                }
+
+                is PostQuickActions.ShowJson -> {
+                    onShowJson(post)
                 }
             }
         },
@@ -971,7 +948,6 @@ private fun BookmarkListScreenPreview(
             onTagClicked = {},
             onPrivateClicked = {},
             onReadLaterClicked = {},
-            onCodeClicked = {},
             showPostDescription = true,
             sidePanelVisible = false,
         )
@@ -1016,7 +992,6 @@ private fun BookmarkItemPreview(
                 onTagClicked = {},
                 onPrivateClicked = {},
                 onReadLaterClicked = {},
-                onCodeClicked = {},
             )
         }
     }
