@@ -709,7 +709,7 @@ private fun BookmarkItem(
             },
             private = post.private,
             readLater = post.readLater,
-            showCodeIcon = appMode == AppMode.NOSTR && post.nostrEventJson != null,
+            showCodeIcon = post.nostrEventJson != null,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(y = (-12).dp, x = (-12).dp),
