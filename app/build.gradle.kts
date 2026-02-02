@@ -31,17 +31,11 @@ object AppInfo {
         .toString()
         .also { println("versionName: $it") }
 
-    val gitCommitHash: String by lazy {
-        try {
-            val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
-                .redirectErrorStream(true)
-                .start()
-            process.inputStream.bufferedReader().readLine()?.trim() ?: "unknown"
-        } catch (e: Exception) {
-            "unknown"
-        }
-    }
 }
+
+val gitCommitHash = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+}.standardOutput.asText.map { it.trim() }
 
 android {
     val compileSdkVersion: Int by project
@@ -91,7 +85,7 @@ android {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             isMinifyEnabled = false
-            buildConfigField("String", "GIT_COMMIT", "\"${AppInfo.gitCommitHash}\"")
+            buildConfigField("String", "GIT_COMMIT", "\"${gitCommitHash.getOrElse("unknown")}\"")
         }
 
         getByName("release") {
