@@ -82,7 +82,6 @@ import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.posts.presentation.PostQuickActions
 import com.fibelatti.pinboard.features.sync.PeriodicSync
 import com.fibelatti.pinboard.features.tags.domain.TagManagerState
-import com.fibelatti.pinboard.features.tags.domain.model.Tag
 import com.fibelatti.pinboard.features.tags.presentation.TagManager
 import com.fibelatti.pinboard.features.user.domain.UserPreferences
 import com.fibelatti.ui.components.ChipGroup
@@ -398,10 +397,7 @@ private fun AppPreferencesContent(
             val bookmarkQuickActionCustomizationSheetState = rememberAppSheetState()
             val localResources = LocalResources.current
             val quickActionOptions = remember {
-                val samplePost = Post.EMPTY.copy(
-                    description = "sample_description",
-                    tags = listOf(Tag(name = "sample_tags")),
-                )
+                val samplePost = Post.EMPTY.copy(description = "sample_description")
                 PostQuickActions.allOptions(samplePost).associateWith { option ->
                     option.serializedName in userPreferences.hiddenPostQuickOptions
                 }
