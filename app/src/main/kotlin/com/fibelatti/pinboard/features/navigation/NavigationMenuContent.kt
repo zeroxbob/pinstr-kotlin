@@ -321,7 +321,11 @@ private fun AppVersionDetails(
         )
 
         Text(
-            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+            text = remember {
+                val version = BuildConfig.VERSION_NAME
+                val commit = BuildConfig.GIT_COMMIT
+                if (commit.isNotEmpty()) "$version ($commit)" else version
+            },
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Monospace,
             style = MaterialTheme.typography.bodySmall,

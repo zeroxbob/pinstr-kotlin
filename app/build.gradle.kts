@@ -30,6 +30,17 @@ object AppInfo {
         .apply { if (VERSION_PATCH != 0) append(".$VERSION_PATCH") }
         .toString()
         .also { println("versionName: $it") }
+
+    val gitCommitHash: String by lazy {
+        try {
+            val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+                .redirectErrorStream(true)
+                .start()
+            process.inputStream.bufferedReader().readLine()?.trim() ?: "unknown"
+        } catch (e: Exception) {
+            "unknown"
+        }
+    }
 }
 
 android {
@@ -80,12 +91,14 @@ android {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             isMinifyEnabled = false
+            buildConfigField("String", "GIT_COMMIT", "\"${AppInfo.gitCommitHash}\"")
         }
 
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
             isCrunchPngs = false
+            buildConfigField("String", "GIT_COMMIT", "\"\"")
 
             if (System.getenv("SIGN_BUILD").toBoolean()) {
                 signingConfig = signingConfigs.getByName("release")
