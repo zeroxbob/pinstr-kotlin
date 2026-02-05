@@ -136,7 +136,6 @@ fun UserPreferencesScreen(
                 )
 
                 BookmarkingPreferencesContent(
-                    appMode = appState.appMode,
                     modifier = Modifier.padding(top = 32.dp),
                 )
             }
@@ -154,7 +153,6 @@ fun UserPreferencesScreen(
                 )
 
                 BookmarkingPreferencesContent(
-                    appMode = appState.appMode,
                     modifier = Modifier.requiredWidth(childWidth),
                 )
             }
@@ -508,7 +506,6 @@ private fun AppPreferencesContent(
 
 @Composable
 private fun BookmarkingPreferencesContent(
-    appMode: AppMode,
     modifier: Modifier = Modifier,
     userPreferencesViewModel: UserPreferencesViewModel = hiltViewModel(),
 ) {
@@ -520,7 +517,6 @@ private fun BookmarkingPreferencesContent(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BookmarkingPreferencesContent(
-            appMode = appMode,
             userPreferences = userPreferences,
             onEditAfterSharingChange = userPreferencesViewModel::saveEditAfterSharing,
             onFollowRedirectsChange = userPreferencesViewModel::saveFollowRedirects,
@@ -528,7 +524,6 @@ private fun BookmarkingPreferencesContent(
             onRemovedUrlParametersChange = userPreferencesViewModel::saveRemovedUrlParameters,
             onAutoFillDescriptionChange = userPreferencesViewModel::saveAutoFillDescription,
             onUseBlockquoteChange = userPreferencesViewModel::saveUseBlockquote,
-            onPrivateByDefaultChange = userPreferencesViewModel::saveDefaultPrivate,
         )
 
         SettingItem(
@@ -562,7 +557,6 @@ private fun BookmarkingPreferencesContent(
 
 @Composable
 private fun BookmarkingPreferencesContent(
-    appMode: AppMode,
     userPreferences: UserPreferences,
     onEditAfterSharingChange: (EditAfterSharing) -> Unit,
     onFollowRedirectsChange: (Boolean) -> Unit,
@@ -570,7 +564,6 @@ private fun BookmarkingPreferencesContent(
     onRemovedUrlParametersChange: (Set<String>) -> Unit,
     onAutoFillDescriptionChange: (Boolean) -> Unit,
     onUseBlockquoteChange: (Boolean) -> Unit,
-    onPrivateByDefaultChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -645,15 +638,6 @@ private fun BookmarkingPreferencesContent(
                 description = stringResource(id = R.string.user_preferences_use_blockquote_description),
                 checked = userPreferences.useBlockquote,
                 onCheckedChange = onUseBlockquoteChange,
-            )
-        }
-
-        if (AppMode.NO_API != appMode) {
-            SettingToggle(
-                title = stringResource(id = R.string.user_preferences_default_private_label),
-                description = stringResource(id = R.string.user_preferences_default_private_description),
-                checked = userPreferences.defaultPrivate,
-                onCheckedChange = onPrivateByDefaultChange,
             )
         }
 
@@ -870,7 +854,6 @@ private fun BookmarkingPreferencesContentPreview(
 ) {
     ExtendedTheme {
         BookmarkingPreferencesContent(
-            appMode = AppMode.PINBOARD,
             userPreferences = userPreferences,
             onEditAfterSharingChange = {},
             onFollowRedirectsChange = {},
@@ -878,8 +861,6 @@ private fun BookmarkingPreferencesContentPreview(
             onRemovedUrlParametersChange = {},
             onAutoFillDescriptionChange = {},
             onUseBlockquoteChange = {},
-            onPrivateByDefaultChange = {},
-            onReadLaterByDefaultChange = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }
