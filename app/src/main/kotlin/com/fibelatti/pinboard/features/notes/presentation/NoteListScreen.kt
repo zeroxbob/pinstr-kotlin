@@ -117,7 +117,6 @@ private fun NoteListContent(
 
         if (notes.isEmpty()) {
             EmptyListContent(
-                icon = painterResource(id = R.drawable.ic_notes),
                 title = stringResource(id = R.string.notes_empty_title),
                 description = stringResource(id = R.string.notes_empty_description),
             )

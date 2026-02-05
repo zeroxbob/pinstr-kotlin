@@ -425,7 +425,6 @@ fun BookmarkListScreen(
 
         if (posts == null && !isLoading) {
             EmptyListContent(
-                icon = painterResource(id = R.drawable.ic_pin),
                 title = stringResource(id = R.string.posts_empty_title),
                 description = stringResource(id = R.string.posts_empty_description),
             )

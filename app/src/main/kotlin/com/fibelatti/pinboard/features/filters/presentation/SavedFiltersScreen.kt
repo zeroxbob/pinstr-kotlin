@@ -99,7 +99,6 @@ private fun SavedFiltersScreen(
 ) {
     if (savedFilters.isEmpty()) {
         EmptyListContent(
-            icon = painterResource(id = R.drawable.ic_filter),
             title = stringResource(id = R.string.saved_filters_empty_title),
             description = stringResource(id = R.string.saved_filters_empty_description),
             modifier = modifier,
