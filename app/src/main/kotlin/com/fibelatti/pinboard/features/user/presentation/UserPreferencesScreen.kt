@@ -78,7 +78,6 @@ import com.fibelatti.pinboard.core.android.composable.SwitchWithIcon
 import com.fibelatti.pinboard.core.extension.fillWidthOfParent
 import com.fibelatti.pinboard.features.posts.domain.EditAfterSharing
 import com.fibelatti.pinboard.features.posts.domain.PreferredDetailsView
-import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.posts.presentation.PostQuickActions
 import com.fibelatti.pinboard.features.sync.PeriodicSync
 import com.fibelatti.pinboard.features.tags.domain.TagManagerState
@@ -396,9 +395,8 @@ private fun AppPreferencesContent(
 
             val bookmarkQuickActionCustomizationSheetState = rememberAppSheetState()
             val localResources = LocalResources.current
-            val quickActionOptions = remember {
-                val samplePost = Post.EMPTY.copy(description = "sample_description", nostrEventJson = "{}")
-                PostQuickActions.allOptions(samplePost).associateWith { option ->
+            val quickActionOptions = remember(userPreferences.hiddenPostQuickOptions) {
+                PostQuickActions.allConfigurableOptions().associateWith { option ->
                     option.serializedName in userPreferences.hiddenPostQuickOptions
                 }
             }

@@ -85,6 +85,8 @@ sealed class PostQuickActions(
 
     companion object {
 
+        private val placeholder = Post.EMPTY
+
         fun allOptions(
             post: Post,
         ): List<PostQuickActions> = buildList {
@@ -104,5 +106,15 @@ sealed class PostQuickActions(
                 add(ShowJson(post))
             }
         }
+
+        fun allConfigurableOptions(): List<PostQuickActions> = listOf(
+            ExpandDescription(placeholder),
+            Edit(placeholder),
+            Delete(placeholder),
+            CopyUrl(placeholder),
+            Share(placeholder),
+            OpenBrowser(placeholder),
+            ShowJson(placeholder),
+        )
     }
 }
