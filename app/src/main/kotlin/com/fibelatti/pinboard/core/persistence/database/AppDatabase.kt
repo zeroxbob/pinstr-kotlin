@@ -11,7 +11,7 @@ import com.fibelatti.pinboard.features.posts.data.model.PostDtoFts
 import com.fibelatti.pinboard.features.user.data.UserDataSource
 import javax.inject.Inject
 
-const val DATABASE_NAME = "com.fibelatti.pinboard.db"
+const val DATABASE_NAME = "co.pinstr.app.db"
 const val DATABASE_VERSION_1 = 1 // Release 1.0.0
 const val DATABASE_VERSION_2 = 2 // Release 1.7.0
 private const val DATABASE_VERSION_3 = 3 // Release 1.16.4
