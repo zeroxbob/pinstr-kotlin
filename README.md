@@ -89,7 +89,7 @@ License
 --------
 
     Pinstr - Nostr Bookmarking for Android
-    Copyright 2026 Robert
+    Copyright 2026 zeroxbob
 
     This product includes software developed by Filipe Belatti (Pinboard Kotlin).
 
