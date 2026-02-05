@@ -308,6 +308,13 @@ private fun AppVersionDetails(
         )
 
         Text(
+            text = stringResource(id = R.string.about_based_on),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.labelSmall,
+        )
+
+        Text(
             text = stringResource(id = R.string.about_oss_licenses),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Monospace,
