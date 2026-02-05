@@ -134,7 +134,7 @@ fun NavigationMenuBottomSheet(
 
 private object NavigationMenu {
 
-    const val APP_URL = "https://play.google.com/store/apps/details?id=com.fibelatti.pinboard"
+    const val APP_URL = "https://pinstr.co"
     const val PRIVACY_POLICY_URL = "https://pinstr.co/privacy-policy"
 }
 

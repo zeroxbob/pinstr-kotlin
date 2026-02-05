@@ -397,7 +397,7 @@ private fun AppPreferencesContent(
             val bookmarkQuickActionCustomizationSheetState = rememberAppSheetState()
             val localResources = LocalResources.current
             val quickActionOptions = remember {
-                val samplePost = Post.EMPTY.copy(description = "sample_description")
+                val samplePost = Post.EMPTY.copy(description = "sample_description", nostrEventJson = "{}")
                 PostQuickActions.allOptions(samplePost).associateWith { option ->
                     option.serializedName in userPreferences.hiddenPostQuickOptions
                 }
