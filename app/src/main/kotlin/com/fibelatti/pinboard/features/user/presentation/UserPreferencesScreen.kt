@@ -529,7 +529,6 @@ private fun BookmarkingPreferencesContent(
             onAutoFillDescriptionChange = userPreferencesViewModel::saveAutoFillDescription,
             onUseBlockquoteChange = userPreferencesViewModel::saveUseBlockquote,
             onPrivateByDefaultChange = userPreferencesViewModel::saveDefaultPrivate,
-            onReadLaterByDefaultChange = userPreferencesViewModel::saveDefaultReadLater,
         )
 
         SettingItem(
@@ -572,7 +571,6 @@ private fun BookmarkingPreferencesContent(
     onAutoFillDescriptionChange: (Boolean) -> Unit,
     onUseBlockquoteChange: (Boolean) -> Unit,
     onPrivateByDefaultChange: (Boolean) -> Unit,
-    onReadLaterByDefaultChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -659,12 +657,6 @@ private fun BookmarkingPreferencesContent(
             )
         }
 
-        SettingToggle(
-            title = stringResource(id = R.string.user_preferences_default_read_later_label),
-            description = stringResource(id = R.string.user_preferences_default_read_later_description),
-            checked = userPreferences.defaultReadLater,
-            onCheckedChange = onReadLaterByDefaultChange,
-        )
     }
 }
 
