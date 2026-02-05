@@ -3,7 +3,10 @@ package com.fibelatti.pinboard.features.appstate
 import androidx.annotation.VisibleForTesting
 import com.fibelatti.core.functional.Either
 import com.fibelatti.core.functional.catching
+import com.fibelatti.pinboard.core.AppMode
+import com.fibelatti.pinboard.core.AppModeProvider
 import com.fibelatti.pinboard.core.android.ConnectivityInfoProvider
+import com.fibelatti.pinboard.features.nostr.vault.VaultProvider
 import com.fibelatti.pinboard.features.posts.domain.PostsRepository
 import com.fibelatti.pinboard.features.posts.domain.PreferredDetailsView
 import com.fibelatti.pinboard.features.posts.domain.model.Post
@@ -19,6 +22,8 @@ class NavigationActionHandler @Inject constructor(
     private val postsRepository: PostsRepository,
     private val connectivityInfoProvider: ConnectivityInfoProvider,
     private val getPreferredSortType: GetPreferredSortType,
+    private val appModeProvider: AppModeProvider,
+    private val vaultProvider: VaultProvider,
 ) : ActionHandler<NavigationAction>() {
 
     override suspend fun runAction(action: NavigationAction, currentContent: Content): Content {
@@ -37,6 +42,7 @@ class NavigationActionHandler @Inject constructor(
             is ViewAccountSwitcher -> viewAccountSwitcher(currentContent)
             is AddAccount -> addAccount(action, currentContent)
             is ViewPreferences -> viewPreferences(currentContent)
+            is ViewRelays -> viewRelays(currentContent)
         }
     }
 
@@ -168,9 +174,16 @@ class NavigationActionHandler @Inject constructor(
     }
 
     private fun viewAddPost(currentContent: Content): Content {
+        // For Nostr, default to private (encrypted) when vault is unlocked
+        val defaultPrivate = if (appModeProvider.appMode.value == AppMode.NOSTR) {
+            vaultProvider.isUnlocked()
+        } else {
+            userRepository.defaultPrivate ?: false
+        }
+
         val body = { postListContent: PostListContent ->
             AddPostContent(
-                defaultPrivate = userRepository.defaultPrivate ?: false,
+                defaultPrivate = defaultPrivate,
                 defaultReadLater = userRepository.defaultReadLater ?: false,
                 defaultTags = userRepository.defaultTags,
                 previousContent = postListContent,
@@ -283,6 +296,18 @@ class NavigationActionHandler @Inject constructor(
         val body = { postListContent: PostListContent ->
             UserPreferencesContent(
                 userPreferences = userRepository.currentPreferences.value,
+                previousContent = postListContent,
+            )
+        }
+
+        return currentContent
+            .reduce(body)
+            .reduce<PostDetailContent> { postDetailContent -> body(postDetailContent.previousContent) }
+    }
+
+    private fun viewRelays(currentContent: Content): Content {
+        val body = { postListContent: PostListContent ->
+            RelaysContent(
                 previousContent = postListContent,
             )
         }

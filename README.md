@@ -45,7 +45,7 @@ Save links from your favorite websites and apps quickly by sharing them to Pinst
 - Private vault with quantum-resistant encryption (Argon2id + AES-256-GCM)
 - Cross-platform sync with Pinstr web app
 - Configurable relay selection
-- NIP-B0 bookmark format (kind 39701 events)
+- NIP-B0 bookmark format (kind 39701 for public, kind 39702 for private)
 
 About the project
 --------
@@ -89,7 +89,7 @@ License
 --------
 
     Pinstr - Nostr Bookmarking for Android
-    Copyright 2026 Robert
+    Copyright 2026 zeroxbob
 
     This product includes software developed by Filipe Belatti (Pinboard Kotlin).
 

@@ -15,22 +15,25 @@ plugins {
 object AppInfo {
 
     const val APP_NAME = "Pinstr"
-    const val APPLICATION_ID = "com.fibelatti.pinboard"
+    const val APPLICATION_ID = "co.pinstr.app"
 
-    private const val VERSION_MAJOR = 3
-    private const val VERSION_MINOR = 12
-    private const val VERSION_PATCH = 2
-    private const val VERSION_BUILD = 0
+    private const val VERSION_MAJOR = 0
+    private const val VERSION_MINOR = 1
+    private const val VERSION_PATCH = 0
+    private const val VERSION_BUILD = 1
+    private const val VERSION_SUFFIX = "-beta.1"
 
     val versionCode: Int = (VERSION_MAJOR * 1_000_000 + VERSION_MINOR * 10_000 + VERSION_PATCH * 100 + VERSION_BUILD)
         .also { println("versionCode: $it") }
 
-    @Suppress("KotlinConstantConditions", "SimplifyBooleanWithConstants")
-    val versionName: String = StringBuilder("$VERSION_MAJOR.$VERSION_MINOR")
-        .apply { if (VERSION_PATCH != 0) append(".$VERSION_PATCH") }
-        .toString()
+    val versionName: String = "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH$VERSION_SUFFIX"
         .also { println("versionName: $it") }
+
 }
+
+val gitCommitHash = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+}.standardOutput.asText.map { it.trim() }
 
 android {
     val compileSdkVersion: Int by project
@@ -80,12 +83,14 @@ android {
         getByName("debug") {
             applicationIdSuffix = ".debug"
             isMinifyEnabled = false
+            buildConfigField("String", "GIT_COMMIT", "\"${gitCommitHash.getOrElse("unknown")}\"")
         }
 
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
             isCrunchPngs = false
+            buildConfigField("String", "GIT_COMMIT", "\"\"")
 
             if (System.getenv("SIGN_BUILD").toBoolean()) {
                 signingConfig = signingConfigs.getByName("release")
@@ -240,6 +245,9 @@ dependencies {
 
     // Nostr protocol library
     implementation(libs.quartz)
+
+    // Argon2 for vault key derivation
+    implementation(libs.argon2kt)
 
     implementation(libs.bundles.coil)
     implementation(libs.jsoup)

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "13d58a7fb32639deb724e92988ab1aa9",
+    "identityHash": "7e4e0d93271ff4d35cb396a02625c812",
     "entities": [
       {
         "tableName": "Posts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`href` TEXT NOT NULL, `description` TEXT, `extended` TEXT, `hash` TEXT NOT NULL, `time` TEXT NOT NULL, `shared` TEXT NOT NULL, `toread` TEXT NOT NULL, `tags` TEXT NOT NULL, `pendingSync` TEXT, PRIMARY KEY(`hash`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`href` TEXT NOT NULL, `description` TEXT, `extended` TEXT, `hash` TEXT NOT NULL, `time` TEXT NOT NULL, `shared` TEXT NOT NULL, `toread` TEXT NOT NULL, `tags` TEXT NOT NULL, `pendingSync` TEXT, `nostrEventJson` TEXT, PRIMARY KEY(`hash`))",
         "fields": [
           {
             "fieldPath": "href",
@@ -57,6 +57,11 @@
           {
             "fieldPath": "pendingSync",
             "columnName": "pendingSync",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nostrEventJson",
+            "columnName": "nostrEventJson",
             "affinity": "TEXT"
           }
         ],
@@ -182,7 +187,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '13d58a7fb32639deb724e92988ab1aa9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7e4e0d93271ff4d35cb396a02625c812')"
     ]
   }
 }

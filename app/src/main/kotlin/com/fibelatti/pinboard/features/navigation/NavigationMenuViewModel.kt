@@ -8,10 +8,13 @@ import com.fibelatti.pinboard.core.android.base.BaseViewModel
 import com.fibelatti.pinboard.features.appstate.AppStateRepository
 import com.fibelatti.pinboard.features.export.ExportBookmarksUseCase
 import com.fibelatti.pinboard.features.export.MoveFileToUriUseCase
+import com.fibelatti.pinboard.features.nostr.vault.VaultProvider
+import com.fibelatti.pinboard.features.nostr.vault.VaultState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -20,7 +23,14 @@ class NavigationMenuViewModel @Inject constructor(
     appStateRepository: AppStateRepository,
     private val exportBookmarksUseCase: ExportBookmarksUseCase,
     private val moveFileToUriUseCase: MoveFileToUriUseCase,
+    private val vaultProvider: VaultProvider,
 ) : BaseViewModel(scope, appStateRepository) {
+
+    val vaultState: StateFlow<VaultState> = vaultProvider.vaultState
+
+    fun lockVault() {
+        vaultProvider.lockVault()
+    }
 
     var state: State by mutableStateOf(State())
         private set

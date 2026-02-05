@@ -4,15 +4,18 @@ package com.fibelatti.pinboard.features.navigation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
@@ -45,14 +48,15 @@ import com.fibelatti.pinboard.features.appstate.All
 import com.fibelatti.pinboard.features.appstate.Private
 import com.fibelatti.pinboard.features.appstate.Public
 import com.fibelatti.pinboard.features.appstate.Recent
-import com.fibelatti.pinboard.features.appstate.Unread
 import com.fibelatti.pinboard.features.appstate.Untagged
 import com.fibelatti.pinboard.features.appstate.ViewAccountSwitcher
 import com.fibelatti.pinboard.features.appstate.ViewNotes
 import com.fibelatti.pinboard.features.appstate.ViewPopular
 import com.fibelatti.pinboard.features.appstate.ViewPreferences
+import com.fibelatti.pinboard.features.appstate.ViewRelays
 import com.fibelatti.pinboard.features.appstate.ViewSavedFilters
 import com.fibelatti.pinboard.features.appstate.ViewTags
+import com.fibelatti.pinboard.features.nostr.vault.VaultState
 import com.fibelatti.ui.components.AutoSizeText
 import com.fibelatti.ui.preview.ThemePreviews
 import com.fibelatti.ui.theme.ExtendedTheme
@@ -60,10 +64,9 @@ import com.fibelatti.ui.theme.ExtendedTheme
 @Composable
 fun NavigationMenuContent(
     appMode: AppMode,
+    vaultState: VaultState,
     onNavOptionClicked: (Action) -> Unit,
-    onExportClicked: () -> Unit,
-    onSendFeedbackClicked: () -> Unit,
-    onWriteReviewClicked: () -> Unit,
+    onLockVaultClicked: () -> Unit,
     onShareClicked: () -> Unit,
     onPrivacyPolicyClicked: () -> Unit,
     onLicensesClicked: () -> Unit,
@@ -71,21 +74,20 @@ fun NavigationMenuContent(
 ) {
     NavigationMenuContent(
         appMode = appMode,
+        vaultState = vaultState,
         onAllClicked = { onNavOptionClicked(All) },
         onRecentClicked = { onNavOptionClicked(Recent) },
         onPublicClicked = { onNavOptionClicked(Public) },
         onPrivateClicked = { onNavOptionClicked(Private) },
-        onReadLaterClicked = { onNavOptionClicked(Unread) },
         onUntaggedClicked = { onNavOptionClicked(Untagged) },
         onSavedFiltersClicked = { onNavOptionClicked(ViewSavedFilters) },
         onTagsClicked = { onNavOptionClicked(ViewTags) },
         onNotesClicked = { onNavOptionClicked(ViewNotes) },
         onPopularClicked = { onNavOptionClicked(ViewPopular) },
         onPreferencesClicked = { onNavOptionClicked(ViewPreferences) },
+        onRelaysClicked = { onNavOptionClicked(ViewRelays) },
         onAccountsClicked = { onNavOptionClicked(ViewAccountSwitcher) },
-        onExportClicked = onExportClicked,
-        onSendFeedbackClicked = onSendFeedbackClicked,
-        onWriteReviewClicked = onWriteReviewClicked,
+        onLockVaultClicked = onLockVaultClicked,
         onShareClicked = onShareClicked,
         onPrivacyPolicyClicked = onPrivacyPolicyClicked,
         onLicensesClicked = onLicensesClicked,
@@ -96,21 +98,20 @@ fun NavigationMenuContent(
 @Composable
 private fun NavigationMenuContent(
     appMode: AppMode,
+    vaultState: VaultState,
     onAllClicked: () -> Unit,
     onRecentClicked: () -> Unit,
     onPublicClicked: () -> Unit,
     onPrivateClicked: () -> Unit,
-    onReadLaterClicked: () -> Unit,
     onUntaggedClicked: () -> Unit,
     onSavedFiltersClicked: () -> Unit,
     onTagsClicked: () -> Unit,
     onNotesClicked: () -> Unit,
     onPopularClicked: () -> Unit,
     onPreferencesClicked: () -> Unit,
+    onRelaysClicked: () -> Unit,
     onAccountsClicked: () -> Unit,
-    onExportClicked: () -> Unit,
-    onSendFeedbackClicked: () -> Unit,
-    onWriteReviewClicked: () -> Unit,
+    onLockVaultClicked: () -> Unit,
     onShareClicked: () -> Unit,
     onPrivacyPolicyClicked: () -> Unit,
     onLicensesClicked: () -> Unit,
@@ -126,18 +127,39 @@ private fun NavigationMenuContent(
     ) {
         val serviceName = remember(appMode) {
             when (appMode) {
-                AppMode.NOSTR -> R.string.nostr
+                AppMode.NOSTR -> R.string.pinstr
                 else -> null
             }
         }
 
         if (serviceName != null) {
-            Text(
-                text = stringResource(id = serviceName),
-                color = MaterialTheme.colorScheme.primary,
-                fontFamily = FontFamily.Serif,
-                style = MaterialTheme.typography.headlineLarge,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_launcher_monochrome),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+
+                Text(
+                    text = stringResource(id = serviceName),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontFamily = FontFamily.Serif,
+                    style = MaterialTheme.typography.headlineLarge,
+                )
+            }
+
+            // Vault status indicator for Nostr
+            if (appMode == AppMode.NOSTR && vaultState != VaultState.NO_VAULT) {
+                Spacer(modifier = Modifier.height(8.dp))
+                VaultStatusIndicator(
+                    vaultState = vaultState,
+                    onLockClicked = onLockVaultClicked,
+                )
+            }
 
             Spacer(modifier = Modifier.height(30.dp))
         }
@@ -158,8 +180,8 @@ private fun NavigationMenuContent(
             iconRes = R.drawable.ic_bookmarks,
         )
 
-        // Nostr bookmarks are always public, so hide public/private filters
-        if (AppMode.NO_API != appMode && AppMode.NOSTR != appMode) {
+        // Show public/private filters for services that support it (including Nostr with vault)
+        if (AppMode.NO_API != appMode) {
             MenuItem(
                 textRes = R.string.menu_navigation_public,
                 onClick = onPublicClicked,
@@ -172,12 +194,6 @@ private fun NavigationMenuContent(
                 iconRes = R.drawable.ic_bookmarks,
             )
         }
-
-        MenuItem(
-            textRes = R.string.menu_navigation_unread,
-            onClick = onReadLaterClicked,
-            iconRes = R.drawable.ic_bookmarks,
-        )
 
         MenuItem(
             textRes = R.string.menu_navigation_untagged,
@@ -223,16 +239,19 @@ private fun NavigationMenuContent(
             ),
         )
 
+        // Relays menu item (only for Nostr)
+        if (appMode == AppMode.NOSTR) {
+            MenuItem(
+                textRes = R.string.menu_navigation_relays,
+                onClick = onRelaysClicked,
+                iconRes = R.drawable.ic_sync,
+            )
+        }
+
         MenuItem(
             textRes = R.string.menu_navigation_accounts,
             onClick = onAccountsClicked,
             iconRes = R.drawable.ic_person,
-        )
-
-        MenuItem(
-            textRes = R.string.menu_navigation_export,
-            onClick = onExportClicked,
-            iconRes = R.drawable.ic_backup,
             shape = MaterialTheme.shapes.medium.copy(
                 topStart = CornerSize(2.dp),
                 topEnd = CornerSize(2.dp),
@@ -242,25 +261,13 @@ private fun NavigationMenuContent(
         Spacer(modifier = Modifier.height(30.dp))
 
         MenuItem(
-            textRes = R.string.about_send_feedback,
-            onClick = onSendFeedbackClicked,
-            iconRes = R.drawable.ic_feedback,
+            textRes = R.string.about_share,
+            onClick = onShareClicked,
+            iconRes = R.drawable.ic_share,
             shape = MaterialTheme.shapes.medium.copy(
                 bottomStart = CornerSize(2.dp),
                 bottomEnd = CornerSize(2.dp),
             ),
-        )
-
-        MenuItem(
-            textRes = R.string.about_rate,
-            onClick = onWriteReviewClicked,
-            iconRes = R.drawable.ic_rate,
-        )
-
-        MenuItem(
-            textRes = R.string.about_share,
-            onClick = onShareClicked,
-            iconRes = R.drawable.ic_share,
         )
 
         MenuItem(
@@ -302,10 +309,21 @@ private fun AppVersionDetails(
         )
 
         Text(
-            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+            text = remember {
+                val version = BuildConfig.VERSION_NAME
+                val commit = BuildConfig.GIT_COMMIT
+                if (commit.isNotEmpty()) "$version ($commit)" else version
+            },
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Monospace,
             style = MaterialTheme.typography.bodySmall,
+        )
+
+        Text(
+            text = stringResource(id = R.string.about_based_on),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.labelSmall,
         )
 
         Text(
@@ -314,6 +332,74 @@ private fun AppVersionDetails(
             fontFamily = FontFamily.Monospace,
             style = MaterialTheme.typography.labelSmall,
         )
+    }
+}
+
+@Composable
+private fun VaultStatusIndicator(
+    vaultState: VaultState,
+    onLockClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .background(
+                if (vaultState == VaultState.UNLOCKED) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                } else {
+                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                },
+            )
+            .clickable(
+                enabled = vaultState == VaultState.UNLOCKED,
+                onClick = onLockClicked,
+                role = Role.Button,
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(
+                id = if (vaultState == VaultState.UNLOCKED) {
+                    R.drawable.ic_lock_open
+                } else {
+                    R.drawable.ic_lock
+                },
+            ),
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = if (vaultState == VaultState.UNLOCKED) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            },
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(
+                id = if (vaultState == VaultState.UNLOCKED) {
+                    R.string.vault_status_unlocked
+                } else {
+                    R.string.vault_status_locked
+                },
+            ),
+            color = if (vaultState == VaultState.UNLOCKED) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            },
+            style = MaterialTheme.typography.labelMedium,
+        )
+        if (vaultState == VaultState.UNLOCKED) {
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = stringResource(id = R.string.vault_tap_to_lock),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
     }
 }
 
@@ -362,21 +448,20 @@ private fun NavigationMenuContentPreview() {
     ExtendedTheme {
         NavigationMenuContent(
             appMode = AppMode.NOSTR,
+            vaultState = VaultState.UNLOCKED,
             onAllClicked = {},
             onRecentClicked = {},
             onPublicClicked = {},
             onPrivateClicked = {},
-            onReadLaterClicked = {},
             onUntaggedClicked = {},
             onSavedFiltersClicked = {},
             onTagsClicked = {},
             onNotesClicked = {},
             onPopularClicked = {},
             onPreferencesClicked = {},
+            onRelaysClicked = {},
             onAccountsClicked = {},
-            onExportClicked = {},
-            onSendFeedbackClicked = {},
-            onWriteReviewClicked = {},
+            onLockVaultClicked = {},
             onShareClicked = {},
             onPrivacyPolicyClicked = {},
             onLicensesClicked = {},

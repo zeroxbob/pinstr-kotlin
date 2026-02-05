@@ -78,11 +78,9 @@ import com.fibelatti.pinboard.core.android.composable.SwitchWithIcon
 import com.fibelatti.pinboard.core.extension.fillWidthOfParent
 import com.fibelatti.pinboard.features.posts.domain.EditAfterSharing
 import com.fibelatti.pinboard.features.posts.domain.PreferredDetailsView
-import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.posts.presentation.PostQuickActions
 import com.fibelatti.pinboard.features.sync.PeriodicSync
 import com.fibelatti.pinboard.features.tags.domain.TagManagerState
-import com.fibelatti.pinboard.features.tags.domain.model.Tag
 import com.fibelatti.pinboard.features.tags.presentation.TagManager
 import com.fibelatti.pinboard.features.user.domain.UserPreferences
 import com.fibelatti.ui.components.ChipGroup
@@ -138,7 +136,6 @@ fun UserPreferencesScreen(
                 )
 
                 BookmarkingPreferencesContent(
-                    appMode = appState.appMode,
                     modifier = Modifier.padding(top = 32.dp),
                 )
             }
@@ -156,7 +153,6 @@ fun UserPreferencesScreen(
                 )
 
                 BookmarkingPreferencesContent(
-                    appMode = appState.appMode,
                     modifier = Modifier.requiredWidth(childWidth),
                 )
             }
@@ -397,12 +393,8 @@ private fun AppPreferencesContent(
 
             val bookmarkQuickActionCustomizationSheetState = rememberAppSheetState()
             val localResources = LocalResources.current
-            val quickActionOptions = remember {
-                val samplePost = Post.EMPTY.copy(
-                    description = "sample_description",
-                    tags = listOf(Tag(name = "sample_tags")),
-                )
-                PostQuickActions.allOptions(samplePost).associateWith { option ->
+            val quickActionOptions = remember(userPreferences.hiddenPostQuickOptions) {
+                PostQuickActions.allConfigurableOptions().associateWith { option ->
                     option.serializedName in userPreferences.hiddenPostQuickOptions
                 }
             }
@@ -514,7 +506,6 @@ private fun AppPreferencesContent(
 
 @Composable
 private fun BookmarkingPreferencesContent(
-    appMode: AppMode,
     modifier: Modifier = Modifier,
     userPreferencesViewModel: UserPreferencesViewModel = hiltViewModel(),
 ) {
@@ -526,7 +517,6 @@ private fun BookmarkingPreferencesContent(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BookmarkingPreferencesContent(
-            appMode = appMode,
             userPreferences = userPreferences,
             onEditAfterSharingChange = userPreferencesViewModel::saveEditAfterSharing,
             onFollowRedirectsChange = userPreferencesViewModel::saveFollowRedirects,
@@ -534,8 +524,6 @@ private fun BookmarkingPreferencesContent(
             onRemovedUrlParametersChange = userPreferencesViewModel::saveRemovedUrlParameters,
             onAutoFillDescriptionChange = userPreferencesViewModel::saveAutoFillDescription,
             onUseBlockquoteChange = userPreferencesViewModel::saveUseBlockquote,
-            onPrivateByDefaultChange = userPreferencesViewModel::saveDefaultPrivate,
-            onReadLaterByDefaultChange = userPreferencesViewModel::saveDefaultReadLater,
         )
 
         SettingItem(
@@ -569,7 +557,6 @@ private fun BookmarkingPreferencesContent(
 
 @Composable
 private fun BookmarkingPreferencesContent(
-    appMode: AppMode,
     userPreferences: UserPreferences,
     onEditAfterSharingChange: (EditAfterSharing) -> Unit,
     onFollowRedirectsChange: (Boolean) -> Unit,
@@ -577,8 +564,6 @@ private fun BookmarkingPreferencesContent(
     onRemovedUrlParametersChange: (Set<String>) -> Unit,
     onAutoFillDescriptionChange: (Boolean) -> Unit,
     onUseBlockquoteChange: (Boolean) -> Unit,
-    onPrivateByDefaultChange: (Boolean) -> Unit,
-    onReadLaterByDefaultChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -656,21 +641,6 @@ private fun BookmarkingPreferencesContent(
             )
         }
 
-        if (AppMode.NO_API != appMode) {
-            SettingToggle(
-                title = stringResource(id = R.string.user_preferences_default_private_label),
-                description = stringResource(id = R.string.user_preferences_default_private_description),
-                checked = userPreferences.defaultPrivate,
-                onCheckedChange = onPrivateByDefaultChange,
-            )
-        }
-
-        SettingToggle(
-            title = stringResource(id = R.string.user_preferences_default_read_later_label),
-            description = stringResource(id = R.string.user_preferences_default_read_later_description),
-            checked = userPreferences.defaultReadLater,
-            onCheckedChange = onReadLaterByDefaultChange,
-        )
     }
 }
 
@@ -884,7 +854,6 @@ private fun BookmarkingPreferencesContentPreview(
 ) {
     ExtendedTheme {
         BookmarkingPreferencesContent(
-            appMode = AppMode.PINBOARD,
             userPreferences = userPreferences,
             onEditAfterSharingChange = {},
             onFollowRedirectsChange = {},
@@ -892,8 +861,6 @@ private fun BookmarkingPreferencesContentPreview(
             onRemovedUrlParametersChange = {},
             onAutoFillDescriptionChange = {},
             onUseBlockquoteChange = {},
-            onPrivateByDefaultChange = {},
-            onReadLaterByDefaultChange = {},
             modifier = Modifier.safeDrawingPadding(),
         )
     }

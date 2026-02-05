@@ -2,10 +2,8 @@ package com.fibelatti.pinboard.features.posts.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -67,6 +65,7 @@ import com.fibelatti.pinboard.features.appstate.EditPostContent
 import com.fibelatti.pinboard.features.appstate.NavigateBack
 import com.fibelatti.pinboard.features.main.MainState
 import com.fibelatti.pinboard.features.main.MainViewModel
+import com.fibelatti.pinboard.features.nostr.vault.VaultProvider
 import com.fibelatti.pinboard.features.posts.domain.model.PendingSync
 import com.fibelatti.pinboard.features.posts.domain.model.Post
 import com.fibelatti.pinboard.features.tags.domain.TagManagerState
@@ -86,6 +85,7 @@ fun EditBookmarkScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
     editPostViewModel: EditPostViewModel = hiltViewModel(),
     postDetailViewModel: PostDetailViewModel = hiltViewModel(),
+    vaultProvider: VaultProvider = hiltViewModel<EditBookmarkVaultViewModel>().vaultProvider,
 ) {
     val appState by mainViewModel.appState.collectAsStateWithLifecycle()
     val postState by editPostViewModel.postState.collectAsStateWithLifecycle(initialValue = null)
@@ -102,6 +102,7 @@ fun EditBookmarkScreen(
         post = currentState,
         isNewBookmark = editPostScreenState.isNewBookmark,
         isLoading = editPostScreenState.isLoading || postDetailScreenState.isLoading,
+        isVaultUnlocked = vaultProvider.isUnlocked(),
         onUrlChanged = { newValue ->
             editPostViewModel.updatePost { post -> post.copy(url = newValue) }
         },
@@ -118,9 +119,6 @@ fun EditBookmarkScreen(
         },
         onPrivateChanged = { newValue ->
             editPostViewModel.updatePost { post -> post.copy(private = newValue) }
-        },
-        onReadLaterChanged = { newValue ->
-            editPostViewModel.updatePost { post -> post.copy(readLater = newValue) }
         },
         searchTagInput = tagManagerState.currentQuery,
         onSearchTagInputChanged = editPostViewModel::setTagSearchQuery,
@@ -322,6 +320,7 @@ private fun EditBookmarkScreen(
     post: Post,
     isNewBookmark: Boolean,
     isLoading: Boolean,
+    isVaultUnlocked: Boolean,
     onUrlChanged: (String) -> Unit,
     urlError: String,
     onTitleChanged: (String) -> Unit,
@@ -329,7 +328,6 @@ private fun EditBookmarkScreen(
     onDescriptionChanged: (String) -> Unit,
     onNotesChanged: (String) -> Unit,
     onPrivateChanged: (Boolean) -> Unit,
-    onReadLaterChanged: (Boolean) -> Unit,
     searchTagInput: String,
     onSearchTagInputChanged: (String) -> Unit,
     onAddTagClicked: (String) -> Unit,
@@ -348,6 +346,7 @@ private fun EditBookmarkScreen(
             appMode = appMode,
             post = post,
             isNewBookmark = isNewBookmark,
+            isVaultUnlocked = isVaultUnlocked,
             onUrlChanged = onUrlChanged,
             urlError = urlError,
             onTitleChanged = onTitleChanged,
@@ -355,7 +354,6 @@ private fun EditBookmarkScreen(
             onDescriptionChanged = onDescriptionChanged,
             onNotesChanged = onNotesChanged,
             onPrivateChanged = onPrivateChanged,
-            onReadLaterChanged = onReadLaterChanged,
             searchTagInput = searchTagInput,
             onSearchTagInputChanged = onSearchTagInputChanged,
             onAddTagClicked = onAddTagClicked,
@@ -388,6 +386,7 @@ private fun BookmarkContent(
     appMode: AppMode,
     post: Post,
     isNewBookmark: Boolean,
+    isVaultUnlocked: Boolean,
     onUrlChanged: (String) -> Unit,
     urlError: String,
     onTitleChanged: (String) -> Unit,
@@ -395,7 +394,6 @@ private fun BookmarkContent(
     onDescriptionChanged: (String) -> Unit,
     onNotesChanged: (String) -> Unit,
     onPrivateChanged: (Boolean) -> Unit,
-    onReadLaterChanged: (Boolean) -> Unit,
     searchTagInput: String,
     onSearchTagInputChanged: (String) -> Unit,
     onAddTagClicked: (String) -> Unit,
@@ -446,8 +444,7 @@ private fun BookmarkContent(
             appMode = appMode,
             private = post.private,
             onPrivateChanged = onPrivateChanged,
-            readLater = post.readLater,
-            onReadLaterChanged = onReadLaterChanged,
+            isVaultUnlocked = isVaultUnlocked,
         )
 
         TagManager(
@@ -596,32 +593,17 @@ private fun BookmarkFlags(
     appMode: AppMode,
     private: Boolean?,
     onPrivateChanged: (Boolean) -> Unit,
-    readLater: Boolean?,
-    onReadLaterChanged: (Boolean) -> Unit,
+    isVaultUnlocked: Boolean = false,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, top = 4.dp, end = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        // Nostr bookmarks are always public, so hide the private toggle
-        if (AppMode.NO_API != appMode && AppMode.NOSTR != appMode) {
-            SettingToggle(
-                title = stringResource(id = R.string.posts_add_private),
-                description = null,
-                checked = private == true,
-                onCheckedChange = onPrivateChanged,
-                modifier = Modifier.weight(0.5f),
-            )
-        }
-
+    if (appMode == AppMode.NOSTR && isVaultUnlocked) {
         SettingToggle(
-            title = stringResource(id = R.string.posts_add_read_later),
-            description = null,
-            checked = readLater == true,
-            onCheckedChange = onReadLaterChanged,
-            modifier = Modifier.weight(0.5f),
+            title = stringResource(id = R.string.posts_add_encrypted),
+            description = stringResource(id = R.string.posts_add_encrypted_description),
+            checked = private == true,
+            onCheckedChange = onPrivateChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 4.dp, end = 16.dp),
         )
     }
 }
@@ -639,6 +621,7 @@ private fun EditBookmarkScreenPreview(
             post = post.copy(description = post.description.take(200)),
             isNewBookmark = true,
             isLoading = false,
+            isVaultUnlocked = true,
             onUrlChanged = {},
             urlError = "",
             onTitleChanged = {},
@@ -646,7 +629,6 @@ private fun EditBookmarkScreenPreview(
             onDescriptionChanged = {},
             onNotesChanged = {},
             onPrivateChanged = {},
-            onReadLaterChanged = {},
             searchTagInput = "",
             onSearchTagInputChanged = {},
             onAddTagClicked = {},

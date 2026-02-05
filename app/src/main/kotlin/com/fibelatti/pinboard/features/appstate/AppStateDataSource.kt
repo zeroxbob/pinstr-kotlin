@@ -1,10 +1,13 @@
 package com.fibelatti.pinboard.features.appstate
 
+import com.fibelatti.pinboard.core.AppMode
 import com.fibelatti.pinboard.core.AppModeProvider
 import com.fibelatti.pinboard.core.android.ConnectivityInfoProvider
 import com.fibelatti.pinboard.core.di.AppDispatchers
 import com.fibelatti.pinboard.core.di.Scope
 import com.fibelatti.pinboard.core.network.UnauthorizedPluginProvider
+import com.fibelatti.pinboard.features.nostr.vault.VaultProvider
+import com.fibelatti.pinboard.features.nostr.vault.VaultState
 import com.fibelatti.pinboard.features.posts.data.PostsDao
 import com.fibelatti.pinboard.features.user.domain.GetPreferredSortType
 import com.fibelatti.pinboard.features.user.domain.UserRepository
@@ -23,6 +26,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -38,6 +42,7 @@ class AppStateDataSource @Inject constructor(
     private val unauthorizedPluginProvider: UnauthorizedPluginProvider,
     private val getPreferredSortType: GetPreferredSortType,
     private val postsDao: PostsDao,
+    private val vaultProvider: VaultProvider,
 ) : AppStateRepository {
 
     private val reducer: MutableSharedFlow<suspend (AppState) -> AppState> = MutableSharedFlow()
@@ -77,7 +82,41 @@ class AppStateDataSource @Inject constructor(
                         is UserLoggedIn -> {
                             appModeProvider.setSelection(action.appMode)
                             unauthorizedPluginProvider.enable(appMode = action.appMode)
-                            getInitialPostListContent()
+
+                            // For Nostr, check vault state before proceeding
+                            if (action.appMode == AppMode.NOSTR) {
+                                when (vaultProvider.vaultState.value) {
+                                    VaultState.NO_VAULT -> {
+                                        Timber.d("Nostr login: No vault, navigating to setup")
+                                        VaultSetupContent()
+                                    }
+                                    VaultState.LOCKED -> {
+                                        // Try auto-unlock with stored passphrase
+                                        val storedPassphrase = vaultProvider.getStoredPassphrase()
+                                        val userPubkey = userRepository.nostrPubkey
+                                        if (storedPassphrase != null && userPubkey != null) {
+                                            Timber.d("Nostr login: Attempting auto-unlock")
+                                            val result = vaultProvider.unlockVault(storedPassphrase, userPubkey)
+                                            if (result.isSuccess) {
+                                                Timber.d("Nostr login: Auto-unlock successful, proceeding to posts")
+                                                getInitialPostListContent()
+                                            } else {
+                                                Timber.d("Nostr login: Auto-unlock failed, navigating to unlock")
+                                                VaultUnlockContent()
+                                            }
+                                        } else {
+                                            Timber.d("Nostr login: Vault locked, navigating to unlock")
+                                            VaultUnlockContent()
+                                        }
+                                    }
+                                    VaultState.UNLOCKED -> {
+                                        Timber.d("Nostr login: Vault unlocked, proceeding to posts")
+                                        getInitialPostListContent()
+                                    }
+                                }
+                            } else {
+                                getInitialPostListContent()
+                            }
                         }
 
                         is UserLoginFailed, is UserLoggedOut, is UserUnauthorized -> {
@@ -85,10 +124,11 @@ class AppStateDataSource @Inject constructor(
                             unauthorizedPluginProvider.disable(appMode = action.appMode)
                             userRepository.clearAuthToken(appMode = action.appMode)
 
-                            // Clear local posts cache when logging out
+                            // Clear local posts cache and vault when logging out
                             if (action is UserLoggedOut) {
                                 postsDao.deleteAllPosts()
-                                Timber.d("Cleared posts cache on logout")
+                                vaultProvider.clearVault()
+                                Timber.d("Cleared posts cache and vault on logout")
                             }
 
                             when {
@@ -96,6 +136,22 @@ class AppStateDataSource @Inject constructor(
                                 userRepository.userCredentials.first().hasAuthToken() -> getInitialPostListContent()
                                 else -> LoginContent()
                             }
+                        }
+                    }
+                }
+
+                is VaultAction -> {
+                    when (action) {
+                        is ViewVaultSetup -> VaultSetupContent(previousContent = appState.content)
+                        is ViewVaultUnlock -> VaultUnlockContent(previousContent = appState.content)
+                        is VaultReady -> {
+                            Timber.d("Vault ready, navigating to posts")
+                            getInitialPostListContent()
+                        }
+                        is ResetVault -> {
+                            vaultProvider.resetVault()
+                            Timber.d("Vault reset, returning to setup")
+                            VaultSetupContent()
                         }
                     }
                 }
@@ -141,7 +197,40 @@ class AppStateDataSource @Inject constructor(
 
     private fun getInitialContent(): Content {
         return if (userRepository.userCredentials.value.hasAuthToken()) {
-            getInitialPostListContent()
+            // For Nostr, check vault state
+            if (appModeProvider.appMode.value == AppMode.NOSTR) {
+                when (vaultProvider.vaultState.value) {
+                    VaultState.NO_VAULT -> {
+                        Timber.d("Initial content: No vault, showing setup")
+                        VaultSetupContent()
+                    }
+                    VaultState.LOCKED -> {
+                        // Try auto-unlock with stored passphrase
+                        val storedPassphrase = vaultProvider.getStoredPassphrase()
+                        val userPubkey = userRepository.nostrPubkey
+                        if (storedPassphrase != null && userPubkey != null) {
+                            Timber.d("Initial content: Attempting auto-unlock")
+                            val result = runBlocking { vaultProvider.unlockVault(storedPassphrase, userPubkey) }
+                            if (result.isSuccess) {
+                                Timber.d("Initial content: Auto-unlock successful, showing posts")
+                                getInitialPostListContent()
+                            } else {
+                                Timber.d("Initial content: Auto-unlock failed, showing unlock screen")
+                                VaultUnlockContent()
+                            }
+                        } else {
+                            Timber.d("Initial content: Vault locked, showing unlock")
+                            VaultUnlockContent()
+                        }
+                    }
+                    VaultState.UNLOCKED -> {
+                        Timber.d("Initial content: Vault unlocked, showing posts")
+                        getInitialPostListContent()
+                    }
+                }
+            } else {
+                getInitialPostListContent()
+            }
         } else {
             LoginContent()
         }

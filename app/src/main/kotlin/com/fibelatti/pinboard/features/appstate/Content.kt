@@ -37,6 +37,22 @@ data class LoginContent(
     override val previousContent: Content = ExternalContent,
 ) : ContentWithHistory()
 
+/**
+ * Content for vault setup screen (shown after Nostr login if no vault exists).
+ * User must create a vault before using the app.
+ */
+data class VaultSetupContent(
+    override val previousContent: Content = ExternalContent,
+) : ContentWithHistory()
+
+/**
+ * Content for vault unlock dialog (shown after Nostr login if vault exists but is locked).
+ * User must unlock their vault to access private bookmarks.
+ */
+data class VaultUnlockContent(
+    override val previousContent: Content = ExternalContent,
+) : ContentWithHistory()
+
 data class PostListContent(
     val category: ViewCategory,
     val posts: PostList?,
@@ -134,6 +150,10 @@ data class AccountSwitcherContent(
 
 data class UserPreferencesContent(
     val userPreferences: UserPreferences,
+    override val previousContent: PostListContent,
+) : ContentWithHistory()
+
+data class RelaysContent(
     override val previousContent: PostListContent,
 ) : ContentWithHistory()
 

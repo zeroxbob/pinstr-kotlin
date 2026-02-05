@@ -11,7 +11,7 @@ import com.fibelatti.pinboard.features.posts.data.model.PostDtoFts
 import com.fibelatti.pinboard.features.user.data.UserDataSource
 import javax.inject.Inject
 
-const val DATABASE_NAME = "com.fibelatti.pinboard.db"
+const val DATABASE_NAME = "co.pinstr.app.db"
 const val DATABASE_VERSION_1 = 1 // Release 1.0.0
 const val DATABASE_VERSION_2 = 2 // Release 1.7.0
 private const val DATABASE_VERSION_3 = 3 // Release 1.16.4
@@ -22,13 +22,14 @@ private const val DATABASE_VERSION_7 = 7 // Release 3.2.0
 private const val DATABASE_VERSION_8 = 8 // Release 3.8.3
 private const val DATABASE_VERSION_9 = 9 // Release 3.12.0 (Advanced search)
 private const val DATABASE_VERSION_10 = 10 // Remove Linkding support
+private const val DATABASE_VERSION_11 = 11 // Add nostrEventJson column
 
 @Database(
     entities = [
         PostDto::class, PostDtoFts::class,
         SavedFilterDto::class,
     ],
-    version = DATABASE_VERSION_10,
+    version = DATABASE_VERSION_11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

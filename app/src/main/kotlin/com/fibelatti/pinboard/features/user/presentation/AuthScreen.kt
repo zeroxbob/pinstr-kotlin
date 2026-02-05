@@ -128,7 +128,7 @@ private fun AuthScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_pin),
+            painter = painterResource(id = R.drawable.ic_launcher_monochrome),
             contentDescription = null,
             modifier = Modifier
                 .padding(top = 40.dp, bottom = 20.dp)

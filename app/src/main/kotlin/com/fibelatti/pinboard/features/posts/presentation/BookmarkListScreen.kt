@@ -2,7 +2,6 @@
 
 package com.fibelatti.pinboard.features.posts.presentation
 
-import android.content.ClipData
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,14 +46,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
@@ -172,18 +168,14 @@ fun BookmarkListScreen(
 
         val userCredentials by userPreferencesViewModel.userCredentials.collectAsStateWithLifecycle()
         val userPreferences by userPreferencesViewModel.currentPreferences.collectAsStateWithLifecycle()
-        val tagsClipboard = remember { mutableListOf<Tag>() }
-        val tagsCopiedFeedback = stringResource(R.string.feedback_tags_copied_to_clipboard)
 
         val localContext = LocalContext.current
         val localView = LocalView.current
         val localResources = LocalResources.current
-        val localClipboard = LocalClipboard.current
-
-        val coroutineScope = rememberCoroutineScope()
 
         val bookmarkQuickActionsSheetState = rememberAppSheetState()
         val bookmarkDescriptionSheetState = rememberAppSheetState()
+        val bookmarkJsonSheetState = rememberAppSheetState()
         val shareFilterResultsSheetState = rememberAppSheetState()
         val sortSelectionSheetState = rememberAppSheetState()
 
@@ -252,28 +244,7 @@ fun BookmarkListScreen(
 
         BookmarkQuickActionsBottomSheet(
             sheetState = bookmarkQuickActionsSheetState,
-            tagsClipboard = tagsClipboard,
             hiddenPostQuickOptions = userPreferences.hiddenPostQuickOptions,
-            onToggleReadLater = { post ->
-                postDetailViewModel.toggleReadLater(post = post)
-            },
-            onCopyTags = { tags ->
-                tagsClipboard.clear()
-                tagsClipboard.addAll(tags)
-
-                coroutineScope.launch {
-                    val clipData = ClipData.newPlainText(
-                        localResources.getString(R.string.tags_title),
-                        tags.joinToString(separator = " ") { it.name },
-                    )
-                    localClipboard.setClipEntry(ClipEntry(clipData))
-                }
-
-                localView.showBanner(message = tagsCopiedFeedback, duration = 3_000)
-            },
-            onPasteTags = { post, tags ->
-                postDetailViewModel.addTags(post = post, tags = tags)
-            },
             onEdit = { post ->
                 mainViewModel.runAction(action = EditPost(post))
             },
@@ -285,11 +256,18 @@ fun BookmarkListScreen(
             onExpandDescription = { post ->
                 bookmarkDescriptionSheetState.showBottomSheet(data = post)
             },
+            onShowJson = { post ->
+                bookmarkJsonSheetState.showBottomSheet(data = post)
+            },
         )
 
         BookmarkDescriptionBottomSheet(
             sheetState = bookmarkDescriptionSheetState,
             appMode = appState.appMode,
+        )
+
+        BookmarkJsonBottomSheet(
+            sheetState = bookmarkJsonSheetState,
         )
 
         ShareFilterResultsBottomSheet(
@@ -447,7 +425,6 @@ fun BookmarkListScreen(
 
         if (posts == null && !isLoading) {
             EmptyListContent(
-                icon = painterResource(id = R.drawable.ic_pin),
                 title = stringResource(id = R.string.posts_empty_title),
                 description = stringResource(id = R.string.posts_empty_description),
             )
@@ -817,14 +794,11 @@ private fun BookmarkFlags(
 @Composable
 private fun BookmarkQuickActionsBottomSheet(
     sheetState: AppSheetState,
-    tagsClipboard: List<Tag>,
     hiddenPostQuickOptions: Set<String>,
-    onToggleReadLater: (Post) -> Unit,
-    onCopyTags: (List<Tag>) -> Unit,
-    onPasteTags: (Post, List<Tag>) -> Unit,
     onEdit: (Post) -> Unit,
     onDelete: (Post) -> Unit,
     onExpandDescription: (Post) -> Unit,
+    onShowJson: (Post) -> Unit,
 ) {
     val post: Post = sheetState.bottomSheetData() ?: return
     val localContext = LocalContext.current
@@ -833,10 +807,9 @@ private fun BookmarkQuickActionsBottomSheet(
 
     val allOptions: Map<PostQuickActions, Boolean> = remember(
         key1 = post,
-        key2 = tagsClipboard,
-        key3 = hiddenPostQuickOptions,
+        key2 = hiddenPostQuickOptions,
     ) {
-        PostQuickActions.allOptions(post = post, tagsClipboard = tagsClipboard)
+        PostQuickActions.allOptions(post = post)
             .associateWith { option -> option.serializedName in hiddenPostQuickOptions }
     }
 
@@ -848,18 +821,6 @@ private fun BookmarkQuickActionsBottomSheet(
         optionIcon = PostQuickActions::icon,
         onOptionSelected = { option ->
             when (option) {
-                is PostQuickActions.ToggleReadLater -> {
-                    onToggleReadLater(post)
-                }
-
-                is PostQuickActions.CopyTags -> {
-                    onCopyTags(option.tags)
-                }
-
-                is PostQuickActions.PasteTags -> {
-                    onPasteTags(post, option.tags)
-                }
-
                 is PostQuickActions.Edit -> {
                     onEdit(post)
                 }
@@ -884,20 +845,8 @@ private fun BookmarkQuickActionsBottomSheet(
                     localUriHandler.openUri(post.url)
                 }
 
-                is PostQuickActions.SearchWayback -> {
-                    localUriHandler.openUri("https://web.archive.org/web/*/${post.url}")
-                }
-
-                is PostQuickActions.SendToWayback -> {
-                    localUriHandler.openUri("https://web.archive.org/save/${post.url}")
-                }
-
-                is PostQuickActions.SendToArchiveToday -> {
-                    localUriHandler.openUri("https://archive.today/submit/?url=${post.url}")
-                }
-
-                is PostQuickActions.SendToGhostArchive -> {
-                    localUriHandler.openUri("https://ghostarchive.org/save/${post.url}")
+                is PostQuickActions.ShowJson -> {
+                    onShowJson(post)
                 }
             }
         },

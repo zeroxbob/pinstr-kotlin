@@ -33,6 +33,7 @@ import com.fibelatti.pinboard.core.extension.ErrorReportEntryPoint
 import com.fibelatti.pinboard.features.appstate.AppState
 import com.fibelatti.pinboard.features.licenses.OssLicensesActivity
 import com.fibelatti.pinboard.features.main.MainViewModel
+import com.fibelatti.pinboard.features.nostr.vault.VaultState
 import com.fibelatti.ui.components.AppBottomSheet
 import com.fibelatti.ui.components.AppSheetState
 import com.fibelatti.ui.components.hideBottomSheet
@@ -54,6 +55,7 @@ fun NavigationMenuBottomSheet(
         val localUriHandler: UriHandler = LocalUriHandler.current
 
         val appState: AppState by mainViewModel.appState.collectAsStateWithLifecycle()
+        val vaultState: VaultState by navigationMenuViewModel.vaultState.collectAsStateWithLifecycle()
         val state: NavigationMenuViewModel.State = navigationMenuViewModel.state
 
         val saveFileLauncher: ManagedActivityResultLauncher<Intent, ActivityResult> = rememberLauncherForActivityResult(
@@ -87,17 +89,13 @@ fun NavigationMenuBottomSheet(
 
         NavigationMenuContent(
             appMode = appState.appMode,
+            vaultState = vaultState,
             onNavOptionClicked = { action ->
                 mainViewModel.runAction(action)
                 sheetState.hideBottomSheet()
             },
-            onExportClicked = navigationMenuViewModel::createBackup,
-            onSendFeedbackClicked = {
-                localActivity?.showFeedbackPrompt()
-                sheetState.hideBottomSheet()
-            },
-            onWriteReviewClicked = {
-                localUriHandler.openUri(NavigationMenu.APP_URL)
+            onLockVaultClicked = {
+                navigationMenuViewModel.lockVault()
                 sheetState.hideBottomSheet()
             },
             onShareClicked = {
@@ -136,8 +134,8 @@ fun NavigationMenuBottomSheet(
 
 private object NavigationMenu {
 
-    const val APP_URL = "https://play.google.com/store/apps/details?id=com.fibelatti.pinboard"
-    const val PRIVACY_POLICY_URL = "https://fibelatti.com/privacy-policy/pinkt"
+    const val APP_URL = "https://pinstr.co"
+    const val PRIVACY_POLICY_URL = "https://pinstr.co/privacy-policy"
 }
 
 private fun Activity.showFeedbackPrompt() {

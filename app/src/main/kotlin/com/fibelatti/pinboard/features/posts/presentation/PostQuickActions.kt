@@ -4,7 +4,6 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.fibelatti.pinboard.R
 import com.fibelatti.pinboard.features.posts.domain.model.Post
-import com.fibelatti.pinboard.features.tags.domain.model.Tag
 
 sealed class PostQuickActions(
     @StringRes val title: Int,
@@ -13,42 +12,6 @@ sealed class PostQuickActions(
 
     abstract val post: Post
     abstract val serializedName: String
-
-    data class ToggleReadLater(
-        override val post: Post,
-    ) : PostQuickActions(
-        title = if (post.readLater == true) {
-            R.string.quick_actions_remove_read_later
-        } else {
-            R.string.quick_actions_add_read_later
-        },
-        icon = R.drawable.ic_read_later,
-    ) {
-
-        override val serializedName: String = "TOGGLE_READ_LATER"
-    }
-
-    data class CopyTags(
-        override val post: Post,
-        val tags: List<Tag>,
-    ) : PostQuickActions(
-        title = R.string.quick_actions_copy_tags,
-        icon = R.drawable.ic_tag,
-    ) {
-
-        override val serializedName: String = "COPY_TAGS"
-    }
-
-    data class PasteTags(
-        override val post: Post,
-        val tags: List<Tag>,
-    ) : PostQuickActions(
-        title = R.string.quick_actions_paste_tags,
-        icon = R.drawable.ic_tag,
-    ) {
-
-        override val serializedName: String = "PASTE_TAGS"
-    }
 
     data class Edit(
         override val post: Post,
@@ -110,64 +73,25 @@ sealed class PostQuickActions(
         override val serializedName: String = "OPEN_BROWSER"
     }
 
-    data class SearchWayback(
+    data class ShowJson(
         override val post: Post,
     ) : PostQuickActions(
-        title = R.string.quick_actions_search_wayback,
-        icon = R.drawable.ic_search,
+        title = R.string.quick_actions_show_json,
+        icon = R.drawable.ic_code,
     ) {
 
-        override val serializedName: String = "SEARCH_WAYBACK"
-    }
-
-    data class SendToWayback(
-        override val post: Post,
-    ) : PostQuickActions(
-        title = R.string.quick_actions_submit_to_wayback,
-        icon = R.drawable.ic_send,
-    ) {
-
-        override val serializedName: String = "SUBMIT_TO_WAYBACK"
-    }
-
-    data class SendToArchiveToday(
-        override val post: Post,
-    ) : PostQuickActions(
-        title = R.string.quick_actions_submit_to_archive_today,
-        icon = R.drawable.ic_send,
-    ) {
-
-        override val serializedName: String = "SEND_TO_ARCHIVE_TODAY"
-    }
-
-    data class SendToGhostArchive(
-        override val post: Post,
-    ) : PostQuickActions(
-        title = R.string.quick_actions_submit_to_ghost_archive,
-        icon = R.drawable.ic_send,
-    ) {
-
-        override val serializedName: String = "SEND_TO_GHOST_ARCHIVE"
+        override val serializedName: String = "SHOW_JSON"
     }
 
     companion object {
 
+        private val placeholder = Post.EMPTY
+
         fun allOptions(
             post: Post,
-            tagsClipboard: List<Tag> = emptyList(),
         ): List<PostQuickActions> = buildList {
             if (post.displayDescription.isNotBlank()) {
                 add(ExpandDescription(post))
-            }
-
-            add(ToggleReadLater(post))
-
-            if (!post.tags.isNullOrEmpty()) {
-                add(CopyTags(post, post.tags))
-            }
-
-            if (tagsClipboard.isNotEmpty()) {
-                add(PasteTags(post, tagsClipboard))
             }
 
             add(Edit(post))
@@ -176,12 +100,21 @@ sealed class PostQuickActions(
             add(CopyUrl(post))
             add(Share(post))
 
-            add(SearchWayback(post))
-            add(SendToWayback(post))
-            add(SendToArchiveToday(post))
-            add(SendToGhostArchive(post))
-
             add(OpenBrowser(post))
+
+            if (post.nostrEventJson != null) {
+                add(ShowJson(post))
+            }
         }
+
+        fun allConfigurableOptions(): List<PostQuickActions> = listOf(
+            ExpandDescription(placeholder),
+            Edit(placeholder),
+            Delete(placeholder),
+            CopyUrl(placeholder),
+            Share(placeholder),
+            OpenBrowser(placeholder),
+            ShowJson(placeholder),
+        )
     }
 }

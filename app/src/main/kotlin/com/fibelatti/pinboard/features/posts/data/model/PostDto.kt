@@ -30,6 +30,7 @@ data class PostDto(
     val toread: String,
     val tags: String,
     val pendingSync: PendingSyncDto? = null,
+    val nostrEventJson: String? = null,
 )
 
 class PostDtoMapper @Inject constructor(
@@ -59,6 +60,7 @@ class PostDtoMapper @Inject constructor(
                 PendingSyncDto.DELETE -> PendingSync.DELETE
                 null -> null
             },
+            nostrEventJson = nostrEventJson,
         )
     }
 
@@ -78,6 +80,7 @@ class PostDtoMapper @Inject constructor(
                 PendingSync.DELETE -> PendingSyncDto.DELETE
                 null -> null
             },
+            nostrEventJson = nostrEventJson,
         )
     }
 }

@@ -220,7 +220,6 @@ fun TagList(
                 if (items.isEmpty() && searchInput.isBlank()) {
                     item(key = "empty-list") {
                         EmptyListContent(
-                            icon = painterResource(id = R.drawable.ic_tag),
                             title = stringResource(id = R.string.tags_empty_title),
                             description = stringResource(id = R.string.tags_empty_description),
                             scrollable = false,

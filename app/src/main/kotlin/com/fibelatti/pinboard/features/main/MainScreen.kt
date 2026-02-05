@@ -86,11 +86,14 @@ import com.fibelatti.pinboard.features.appstate.PopularPostsContent
 import com.fibelatti.pinboard.features.appstate.PostDetailContent
 import com.fibelatti.pinboard.features.appstate.PostListContent
 import com.fibelatti.pinboard.features.appstate.Refresh
+import com.fibelatti.pinboard.features.appstate.RelaysContent
 import com.fibelatti.pinboard.features.appstate.RefreshPopular
 import com.fibelatti.pinboard.features.appstate.SavedFiltersContent
 import com.fibelatti.pinboard.features.appstate.SearchContent
 import com.fibelatti.pinboard.features.appstate.TagListContent
 import com.fibelatti.pinboard.features.appstate.UserPreferencesContent
+import com.fibelatti.pinboard.features.appstate.VaultSetupContent
+import com.fibelatti.pinboard.features.appstate.VaultUnlockContent
 import com.fibelatti.pinboard.features.appstate.find
 import com.fibelatti.pinboard.features.filters.presentation.SavedFiltersScreen
 import com.fibelatti.pinboard.features.navigation.NavigationMenuBottomSheet
@@ -102,6 +105,9 @@ import com.fibelatti.pinboard.features.posts.presentation.EditBookmarkScreen
 import com.fibelatti.pinboard.features.posts.presentation.PopularBookmarksScreen
 import com.fibelatti.pinboard.features.posts.presentation.SearchBookmarksScreen
 import com.fibelatti.pinboard.features.tags.presentation.TagListScreen
+import com.fibelatti.pinboard.features.nostr.presentation.RelaysScreen
+import com.fibelatti.pinboard.features.nostr.vault.VaultSetupScreen
+import com.fibelatti.pinboard.features.nostr.vault.VaultUnlockScreen
 import com.fibelatti.pinboard.features.user.presentation.AccountSwitcherScreen
 import com.fibelatti.pinboard.features.user.presentation.AuthScreen
 import com.fibelatti.pinboard.features.user.presentation.UserPreferencesScreen
@@ -218,12 +224,16 @@ fun MainScreen(
     onFabClick: (data: Any?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isFullScreenContent = content is LoginContent ||
+        content is VaultSetupContent ||
+        content is VaultUnlockContent
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            if (content !is LoginContent || content.previousContent !is ExternalContent) {
+            if (!isFullScreenContent || (content is LoginContent && content.previousContent !is ExternalContent)) {
                 MainTopAppBar(
                     state = state,
                     onNavigationClick = onNavigationClick,
@@ -263,7 +273,7 @@ fun MainScreen(
             }
         }
 
-        val bottomBarVisible = content !is LoginContent &&
+        val bottomBarVisible = !isFullScreenContent &&
             state.floatingActionButton is MainState.FabComponent.Visible &&
             state.scrollDirection != ScrollDirection.DOWN
 
@@ -331,6 +341,8 @@ private fun MainPanelContent(
     ) { targetState ->
         when (targetState) {
             LoginContent::class -> AuthScreen()
+            VaultSetupContent::class -> VaultSetupScreen()
+            VaultUnlockContent::class -> VaultUnlockScreen()
             PostListContent::class -> BookmarkListScreen(listState = bookmarkListState)
             PostDetailContent::class -> BookmarkDetailsScreen()
             SearchContent::class -> SearchBookmarksScreen()
@@ -344,6 +356,7 @@ private fun MainPanelContent(
             PopularPostDetailContent::class -> BookmarkDetailsScreen()
             AccountSwitcherContent::class -> AccountSwitcherScreen()
             UserPreferencesContent::class -> UserPreferencesScreen()
+            RelaysContent::class -> RelaysScreen()
         }
     }
 }
