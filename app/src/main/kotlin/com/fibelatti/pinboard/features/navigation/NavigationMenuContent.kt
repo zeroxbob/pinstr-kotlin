@@ -127,18 +127,30 @@ private fun NavigationMenuContent(
     ) {
         val serviceName = remember(appMode) {
             when (appMode) {
-                AppMode.NOSTR -> R.string.nostr
+                AppMode.NOSTR -> R.string.pinstr
                 else -> null
             }
         }
 
         if (serviceName != null) {
-            Text(
-                text = stringResource(id = serviceName),
-                color = MaterialTheme.colorScheme.primary,
-                fontFamily = FontFamily.Serif,
-                style = MaterialTheme.typography.headlineLarge,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_launcher_monochrome),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+
+                Text(
+                    text = stringResource(id = serviceName),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontFamily = FontFamily.Serif,
+                    style = MaterialTheme.typography.headlineLarge,
+                )
+            }
 
             // Vault status indicator for Nostr
             if (appMode == AppMode.NOSTR && vaultState != VaultState.NO_VAULT) {
